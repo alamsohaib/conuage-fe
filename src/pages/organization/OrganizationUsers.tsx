@@ -27,6 +27,7 @@ const OrganizationUsers = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentUser, setCurrentUser] = useState<OrganizationUser | null>(null);
   const [primaryLocationError, setPrimaryLocationError] = useState(false);
+  const [selectedAdditionalLocations, setSelectedAdditionalLocations] = useState<string[]>([]);
   
   const createForm = useForm<CreateUserRequest>();
   const editForm = useForm<UpdateUserRequest>();
@@ -163,6 +164,7 @@ const OrganizationUsers = () => {
         setIsEditing(false);
         setCurrentUser(null);
         setPrimaryLocationError(false);
+        setSelectedAdditionalLocations([]);
       } else if (response.error) {
         console.error("Update user error:", response.error);
         
@@ -197,6 +199,8 @@ const OrganizationUsers = () => {
     console.log("Opening edit dialog for user:", user);
     console.log("Primary location:", primaryLocation);
     console.log("Additional locations:", additionalLocations);
+    
+    setSelectedAdditionalLocations(additionalLocations);
     
     editForm.setValue("first_name", user.first_name);
     editForm.setValue("last_name", user.last_name);
@@ -281,6 +285,19 @@ const OrganizationUsers = () => {
       created_at: loc.created_at,
       updated_at: loc.updated_at
     }));
+  };
+  
+  const handleAdditionalLocationChange = (locationId: string, checked: boolean) => {
+    let updatedLocations: string[];
+    
+    if (checked) {
+      updatedLocations = [...selectedAdditionalLocations, locationId];
+    } else {
+      updatedLocations = selectedAdditionalLocations.filter(id => id !== locationId);
+    }
+    
+    setSelectedAdditionalLocations(updatedLocations);
+    editForm.setValue("additional_location_ids", updatedLocations);
   };
   
   if (isLoading) {
@@ -574,7 +591,10 @@ const OrganizationUsers = () => {
       
       <Dialog open={isEditing} onOpenChange={(open) => {
         setIsEditing(open);
-        if (!open) setPrimaryLocationError(false);
+        if (!open) {
+          setPrimaryLocationError(false);
+          setSelectedAdditionalLocations([]);
+        }
       }}>
         <DialogContent className="max-w-2xl">
           <form onSubmit={editForm.handleSubmit(handleEdit)}>
@@ -660,6 +680,8 @@ const OrganizationUsers = () => {
                     editForm.setValue("location_id", locationId);
                     setPrimaryLocationError(false);
                     
+                    setSelectedAdditionalLocations(prev => prev.filter(id => id !== locationId));
+                    
                     const currentAdditional = editForm.getValues("additional_location_ids") || [];
                     if (Array.isArray(currentAdditional)) {
                       editForm.setValue(
@@ -727,39 +749,34 @@ const OrganizationUsers = () => {
                 </p>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {locations.map(location => {
-                    const additionalLocationIds = editForm.getValues("additional_location_ids") || [];
                     const isPrimaryLocation = location.id === editForm.getValues("location_id");
+                    const isSelected = selectedAdditionalLocations.includes(location.id);
                     
                     return (
-                      <div key={location.id} className="flex items-center space-x-2">
+                      <div 
+                        key={location.id} 
+                        className={`flex items-center space-x-2 p-2 rounded-md ${
+                          isSelected && !isPrimaryLocation ? 'bg-accent/30' : ''
+                        }`}
+                      >
                         <Checkbox
                           id={`edit-location-${location.id}`}
-                          checked={additionalLocationIds.includes(location.id)}
+                          checked={isSelected}
                           onCheckedChange={(checked) => {
-                            const currentLocations = Array.isArray(additionalLocationIds) ? 
-                              [...additionalLocationIds] : [];
-                            
-                            if (isPrimaryLocation) {
-                              return;
-                            }
-                            
-                            if (checked) {
-                              editForm.setValue("additional_location_ids", [...currentLocations, location.id]);
-                            } else {
-                              editForm.setValue(
-                                "additional_location_ids",
-                                currentLocations.filter(id => id !== location.id)
-                              );
-                            }
+                            if (isPrimaryLocation) return;
+                            handleAdditionalLocationChange(location.id, checked === true);
                           }}
                           disabled={isPrimaryLocation}
                         />
                         <Label 
                           htmlFor={`edit-location-${location.id}`} 
-                          className={`text-sm font-normal ${isPrimaryLocation ? "text-muted-foreground" : ""}`}
+                          className={`text-sm font-normal ${isPrimaryLocation ? "text-muted-foreground" : ""} ${
+                            isSelected && !isPrimaryLocation ? 'font-medium' : ''
+                          }`}
                         >
                           {location.name}
                           {isPrimaryLocation && <span className="ml-2 text-xs">(Primary - cannot be selected here)</span>}
+                          {isSelected && !isPrimaryLocation && <span className="ml-2 text-xs text-primary">✓</span>}
                         </Label>
                       </div>
                     );
@@ -772,6 +789,7 @@ const OrganizationUsers = () => {
               <Button type="button" variant="outline" onClick={() => {
                 setIsEditing(false);
                 setPrimaryLocationError(false);
+                setSelectedAdditionalLocations([]);
               }}>
                 Cancel
               </Button>
