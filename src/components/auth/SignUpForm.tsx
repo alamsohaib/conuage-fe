@@ -9,8 +9,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const signUpSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email"),
   password: z
     .string()
@@ -38,8 +38,8 @@ const SignUpForm = () => {
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      first_name: "",
+      last_name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -52,8 +52,8 @@ const SignUpForm = () => {
       const success = await signup(
         data.email,
         data.password,
-        data.firstName,
-        data.lastName
+        data.first_name,
+        data.last_name
       );
 
       if (success) {
@@ -69,15 +69,15 @@ const SignUpForm = () => {
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="First Name"
-          {...register("firstName")}
-          error={errors.firstName?.message}
+          {...register("first_name")}
+          error={errors.first_name?.message}
           placeholder="John"
           autoComplete="given-name"
         />
         <Input
           label="Last Name"
-          {...register("lastName")}
-          error={errors.lastName?.message}
+          {...register("last_name")}
+          error={errors.last_name?.message}
           placeholder="Doe"
           autoComplete="family-name"
         />

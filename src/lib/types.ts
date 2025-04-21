@@ -1,8 +1,8 @@
 export type UserSignUp = {
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
 };
 
 export type VerifyEmail = {
