@@ -1,15 +1,19 @@
 
-import { Brain, MessageSquare, Plus } from "lucide-react";
+import { MessageSquarePlus, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/services/api";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleNewChat = async () => {
+    if (isCreating) return;
+    
+    setIsCreating(true);
     try {
       const { data, error } = await api.chat.createChat({ name: "New Chat" });
       if (data) {
@@ -21,66 +25,40 @@ const Welcome = () => {
     } catch (error) {
       console.error("Error creating chat:", error);
       toast.error("Failed to create chat");
+    } finally {
+      setIsCreating(false);
     }
   };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-10">
-      <div className="max-w-xl w-full space-y-8 animate-fade-in">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4 animate-pulse-subtle">
-            <Brain className="w-10 h-10 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-3">
-            Welcome to <span className="text-primary">courage.ai</span> Chat
-          </h1>
-          <p className="text-muted-foreground">
-            Ask questions, get insights, and explore your organizational knowledge with our advanced AI assistant.
-          </p>
+      <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
+        <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
+          <MessageSquarePlus className="w-10 h-10 text-primary" />
         </div>
-
-        <Card className="transition-all hover:shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-primary" />
-              Start a new conversation
-            </CardTitle>
-            <CardDescription>
-              Begin chatting with our AI to unlock insights from your organization's knowledge base.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col space-y-4">
-              <div className="rounded-lg bg-muted p-4">
-                <p className="text-sm italic text-muted-foreground">
-                  "How can I improve customer engagement based on our current data?"
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted p-4">
-                <p className="text-sm italic text-muted-foreground">
-                  "Summarize our quarterly financial performance and highlight key trends."
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted p-4">
-                <p className="text-sm italic text-muted-foreground">
-                  "What are the most common support issues our customers face?"
-                </p>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              className="w-full gap-2 bg-gradient-primary shadow-sm hover:shadow-md transition-all duration-300"
-              onClick={handleNewChat}
-            >
-              <Plus size={18} />
-              New Chat
-            </Button>
-          </CardFooter>
-        </Card>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground dark:text-white">
+          Welcome to Chat
+        </h1>
+        <p className="text-muted-foreground dark:text-white/80">
+          Load a previous chat or click below to start a new chat
+        </p>
+        <Button 
+          size="lg"
+          className="w-auto gap-2 bg-gradient-primary shadow-sm hover:shadow-md transition-all duration-300"
+          onClick={handleNewChat}
+          disabled={isCreating}
+        >
+          {isCreating ? (
+            <Loader className="w-5 h-5 animate-spin" />
+          ) : (
+            <MessageSquarePlus className="w-5 h-5" />
+          )}
+          New Chat
+        </Button>
       </div>
     </div>
   );
 };
 
 export default Welcome;
+

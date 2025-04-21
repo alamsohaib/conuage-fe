@@ -2,6 +2,7 @@
 import { Message, MessageSource } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 import { User, Bot, Image as ImageIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 interface MessageListProps {
   messages: Message[];
@@ -9,6 +10,13 @@ interface MessageListProps {
 }
 
 const MessageList = ({ messages, isLoading }: MessageListProps) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   if (messages.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -59,9 +67,13 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
                     : "bg-muted text-foreground"
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                <div className="whitespace-pre-wrap">
+                  {message.content}
+                  {message.isStreaming && (
+                    <span className="inline-block w-1.5 h-4 ml-1 bg-current animate-pulse rounded-sm" />
+                  )}
+                </div>
                 
-                {/* Image indicator for user messages with images */}
                 {message.role === "user" && message.has_image && (
                   <div className="flex items-center mt-2 text-xs border-t pt-2 border-primary-foreground/30">
                     <ImageIcon size={14} className="mr-1" />
@@ -99,7 +111,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
         </div>
       ))}
       
-      {isLoading && (
+      {isLoading && !messages.some(msg => msg.isStreaming) && (
         <div className="flex justify-start">
           <div className="flex flex-row max-w-3xl">
             <div className="flex items-center justify-center h-8 w-8 rounded-full shrink-0 mr-4 bg-muted text-muted-foreground">
@@ -115,6 +127,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
           </div>
         </div>
       )}
+      <div ref={messagesEndRef} />
     </div>
   );
 };

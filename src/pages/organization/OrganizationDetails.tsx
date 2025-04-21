@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
 import { Organization, UpdateOrganizationRequest, OrganizationLocation, Location } from "@/lib/types";
@@ -22,6 +21,8 @@ import {
 } from "@/components/ui/form";
 import { format } from "date-fns";
 import LocationSelector from "@/components/documents/LocationSelector";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const OrganizationDetails = () => {
   const [organization, setOrganization] = useState<Organization | null>(null);
@@ -30,6 +31,8 @@ const OrganizationDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   
   const form = useForm<UpdateOrganizationRequest>({
     defaultValues: {
@@ -43,6 +46,12 @@ const OrganizationDetails = () => {
       auto_signup_enabled: false
     }
   });
+
+  const handleAuthError = () => {
+    toast.error("Your session has expired. Please login again.");
+    logout();
+    navigate('/auth/login', { replace: true });
+  };
   
   const fetchOrganization = async () => {
     setIsLoading(true);
@@ -78,6 +87,13 @@ const OrganizationDetails = () => {
         }
       } else if (error) {
         console.error("Error fetching organization:", error);
+        
+        const isUnauthorized = error.code === '401' || error.message.includes('401') || error.message.toLowerCase().includes('unauthorized');
+        if (isUnauthorized) {
+          handleAuthError();
+          return;
+        }
+        
         setError(error.message || "Failed to load organization details");
         toast.error(error.message || "Failed to load organization details");
       }
@@ -118,6 +134,13 @@ const OrganizationDetails = () => {
         }
       } else if (error) {
         console.error("Error fetching locations:", error);
+        
+        const isUnauthorized = error.code === '401' || error.message.includes('401') || error.message.toLowerCase().includes('unauthorized');
+        if (isUnauthorized) {
+          handleAuthError();
+          return;
+        }
+        
         toast.error(error.message || "Failed to load locations");
       }
     } catch (error) {
@@ -150,10 +173,8 @@ const OrganizationDetails = () => {
     setError(null);
     
     try {
-      // Create a payload that matches the UpdateOrganizationRequest type
       const payload: UpdateOrganizationRequest = {};
       
-      // Only add fields to the payload if they have valid string values
       if (formData.address && formData.address.trim()) {
         payload.address = formData.address.trim();
       }
@@ -178,7 +199,6 @@ const OrganizationDetails = () => {
         payload.default_location_id = activeLocation.location_id;
       }
       
-      // Add the auto_signup_enabled field
       payload.auto_signup_enabled = formData.auto_signup_enabled;
       
       console.log("Submitting organization update with payload:", JSON.stringify(payload));
@@ -190,6 +210,13 @@ const OrganizationDetails = () => {
         toast.success("Organization details updated successfully");
       } else if (error) {
         console.error("Error updating organization:", error);
+        
+        const isUnauthorized = error.code === '401' || error.message.includes('401') || error.message.toLowerCase().includes('unauthorized');
+        if (isUnauthorized) {
+          handleAuthError();
+          return;
+        }
+        
         setError(`Failed to update organization: ${error.message || "Unknown error"}`);
         
         if (error.details) {
@@ -296,14 +323,27 @@ const OrganizationDetails = () => {
             </div>
           </div>
 
-          <div className="mt-6 space-y-2">
-            <Label>Primary Contact</Label>
-            <div className="p-2 bg-muted/50 rounded-md">
-              {organization.primary_contact ? (
-                <span>{organization.primary_contact.first_name} {organization.primary_contact.last_name} ({organization.primary_contact.email})</span>
-              ) : (
-                <span className="text-muted-foreground">Not set</span>
-              )}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Primary Contact</Label>
+              <div className="p-2 bg-muted/50 rounded-md">
+                {organization.primary_contact ? (
+                  <span>{organization.primary_contact.first_name} {organization.primary_contact.last_name} ({organization.primary_contact.email})</span>
+                ) : (
+                  <span className="text-muted-foreground">Not set</span>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Auto Sign-up</Label>
+              <div className="p-2 bg-muted/50 rounded-md">
+                {organization.auto_signup_enabled ? (
+                  <span className="text-green-600 font-medium">Enabled</span>
+                ) : (
+                  <span className="text-muted-foreground">Disabled</span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -422,7 +462,7 @@ const OrganizationDetails = () => {
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Select a default location for your organization
+                      Select a default location for your organization. This is the location a new user would be assigned to if Auto Sign-up is enabled.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

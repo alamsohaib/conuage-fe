@@ -311,7 +311,7 @@ const OrganizationUsers = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Organization Users</h2>
+        <h2 className="text-xl font-semibold text-foreground dark:text-white">Organization Users</h2>
         <Dialog open={isCreating} onOpenChange={setIsCreating}>
           <DialogTrigger asChild>
             <Button>

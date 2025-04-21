@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/auth/SignUp";
@@ -25,10 +26,25 @@ import OrganizationLocations from "./pages/organization/OrganizationLocations";
 import OrganizationUsers from "./pages/organization/OrganizationUsers";
 import AppLayout from "./components/layout/AppLayout";
 import ProfilePage from "./pages/profile/ProfilePage";
+import Pricing from "./pages/Pricing";
 
-const queryClient = new QueryClient();
+// Lazy load BookDemo for performance
+const BookDemo = lazy(() => import("./pages/BookDemo"));
 
-// Protected route component - moved inside the AuthContext-wrapped component
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        if (error?.message?.includes('401') || 
+            error?.message?.toLowerCase().includes('unauthorized')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    },
+  },
+});
+
 const ProtectedRouteComponent = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   
@@ -47,7 +63,6 @@ const ProtectedRouteComponent = ({ children }: { children: React.ReactNode }) =>
   return <>{children}</>;
 };
 
-// Manager route component - only allows manager or admin roles
 const ManagerRouteComponent = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, userRole } = useAuth();
   
@@ -70,7 +85,6 @@ const ManagerRouteComponent = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Admin route component - only allows admin role
 const AdminRouteComponent = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, userRole } = useAuth();
   
@@ -93,9 +107,7 @@ const AdminRouteComponent = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// The inner app component that has access to auth context
 const AppRoutes = () => {
-  // These route components are now wrapped by AuthProvider
   const ProtectedRoute = ProtectedRouteComponent;
   const ManagerRoute = ManagerRouteComponent;
   const AdminRoute = AdminRouteComponent;
@@ -103,13 +115,20 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/book-demo" element={
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>}>
+          <BookDemo />
+        </Suspense>
+      } />
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/login" element={<Login />} />
       <Route path="/auth/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
       
-      {/* Protected routes with AppLayout */}
       <Route element={
         <ProtectedRoute>
           <AppLayout />
@@ -117,23 +136,19 @@ const AppRoutes = () => {
       }>
         <Route path="/dashboard" element={<Dashboard />} />
         
-        {/* Profile route */}
         <Route path="/profile" element={<ProfilePage />} />
         
-        {/* Chat routes */}
         <Route path="/chat" element={<ChatLayout />}>
           <Route index element={<Welcome />} />
           <Route path=":chatId" element={<Chat />} />
         </Route>
         
-        {/* Document management routes - only for managers and admins */}
         <Route path="/documents" element={
           <ManagerRoute>
             <DocumentManagement />
           </ManagerRoute>
         } />
         
-        {/* Organization management routes - only for org admins */}
         <Route path="/organization" element={
           <AdminRoute>
             <OrganizationLayout />
@@ -152,7 +167,6 @@ const AppRoutes = () => {
   );
 };
 
-// Main app component - Moved AuthProvider to wrap only the AppRoutes component
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>

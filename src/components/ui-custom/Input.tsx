@@ -20,7 +20,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-white"
           >
             {label}
           </label>
@@ -34,6 +34,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               "placeholder:text-muted-foreground",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               "disabled:cursor-not-allowed disabled:opacity-50",
+              "dark:bg-gray-900 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-400",
               error && "border-destructive focus-visible:ring-destructive",
               isPasswordType && "pr-10",
               className
@@ -45,7 +46,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           {isPasswordType && (
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors dark:text-gray-400 dark:hover:text-white"
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
             >
@@ -64,7 +65,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {(error || helperText) && (
           <p className={cn(
             "text-xs",
-            error ? "text-destructive" : "text-muted-foreground"
+            error ? "text-destructive dark:text-red-400" : "text-muted-foreground dark:text-gray-400"
           )}>
             {error || helperText}
           </p>

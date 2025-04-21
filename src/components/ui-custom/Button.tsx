@@ -20,11 +20,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "transition-all duration-200 active:scale-[0.98]",
           
           // Variants
-          variant === "primary" && "bg-primary text-primary-foreground shadow-sm hover:brightness-105",
-          variant === "secondary" && "bg-secondary text-secondary-foreground hover:bg-secondary/90",
-          variant === "outline" && "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground",
-          variant === "ghost" && "hover:bg-accent hover:text-accent-foreground",
-          variant === "link" && "text-primary underline-offset-4 hover:underline",
+          variant === "primary" && "bg-primary text-primary-foreground shadow-sm hover:brightness-105 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500",
+          variant === "secondary" && "bg-secondary text-secondary-foreground hover:bg-secondary/90 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600",
+          variant === "outline" && "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800",
+          variant === "ghost" && "hover:bg-accent hover:text-accent-foreground dark:text-gray-300 dark:hover:bg-gray-800",
+          variant === "link" && "text-primary underline-offset-4 hover:underline dark:text-blue-400",
           
           // Sizes
           size === "sm" && "h-8 px-3 text-xs",

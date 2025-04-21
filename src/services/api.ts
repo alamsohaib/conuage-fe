@@ -72,6 +72,10 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 150
 };
 
 export const api = {
+  // Adding baseUrl and getToken to the api object for easier access
+  baseUrl: API_URL,
+  getToken: () => localStorage.getItem("authToken"),
+  
   // Auth API calls
   auth: {
     signUp: async (userData: UserSignUp): Promise<ApiResponse<void>> => {
@@ -420,6 +424,53 @@ export const api = {
         console.error('Get folders error:', error);
         
         // Provide more detailed error message based on error type
+        const errorMessage = (error as Error).message.includes('Failed to fetch')
+          ? 'Network error. The server might be unavailable or there may be a CORS issue.'
+          : (error as Error).message || 'Network error. Please try again.';
+          
+        return {
+          error: { message: errorMessage }
+        };
+      }
+    },
+
+    getFolder: async (folderId: string): Promise<ApiResponse<Folder>> => {
+      try {
+        if (isOffline()) {
+          console.log('Device is offline. Cannot fetch folder.');
+          return {
+            error: { message: 'You are offline. Please check your internet connection and try again.' }
+          };
+        }
+        
+        console.log(`Fetching folder with ID: ${folderId}`);
+        
+        const response = await fetchWithTimeout(`${API_URL}/api/v1/document-management/folders/${folderId}`, {
+          method: 'GET',
+          headers: {
+            ...getAuthHeaders(),
+            'cache-control': 'no-cache, no-store, must-revalidate',
+            'pragma': 'no-cache',
+            'expires': '0'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
+          console.error('Get folder error:', errorData);
+          return {
+            error: {
+              message: errorData.message || `Server Error: ${response.status} ${response.statusText}`
+            }
+          };
+        }
+
+        const data = await response.json();
+        console.log('Folder API response:', data);
+        return { data, error: null };
+      } catch (error) {
+        console.error('Get folder error:', error);
+        
         const errorMessage = (error as Error).message.includes('Failed to fetch')
           ? 'Network error. The server might be unavailable or there may be a CORS issue.'
           : (error as Error).message || 'Network error. Please try again.';

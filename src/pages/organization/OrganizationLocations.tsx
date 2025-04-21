@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
 import { Organization, OrganizationLocation, CreateLocationRequest, UpdateLocationRequest } from "@/lib/types";
@@ -36,7 +35,6 @@ const OrganizationLocations = () => {
         if (orgResponse.data) {
           setOrganization(orgResponse.data);
           
-          // Fetch locations for the organization
           const locationsResponse = await api.organization.getLocations(orgResponse.data.id);
           
           if (locationsResponse.data) {
@@ -155,7 +153,7 @@ const OrganizationLocations = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Organization Locations</h2>
+        <h2 className="text-xl font-semibold text-foreground dark:text-white">Organization Locations</h2>
         <Dialog open={isCreating} onOpenChange={setIsCreating}>
           <DialogTrigger asChild>
             <Button>
@@ -288,7 +286,6 @@ const OrganizationLocations = () => {
         </Card>
       )}
       
-      {/* Edit Location Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent>
           <form onSubmit={editForm.handleSubmit(handleEdit)}>

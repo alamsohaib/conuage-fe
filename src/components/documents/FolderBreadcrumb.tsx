@@ -1,4 +1,3 @@
-
 import { Folder } from "@/lib/types";
 import {
   Breadcrumb,
@@ -7,7 +6,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { HomeIcon } from "lucide-react";
+import { HomeIcon, Folder as FolderIcon } from "lucide-react";
 
 interface FolderBreadcrumbProps {
   folderPath: Folder[];
@@ -15,59 +14,60 @@ interface FolderBreadcrumbProps {
 }
 
 const FolderBreadcrumb = ({ folderPath, onNavigate }: FolderBreadcrumbProps) => {
-  if (folderPath.length === 0) return null;
-  
-  // Get the current folder (the last one in the path)
-  const currentFolder = folderPath[folderPath.length - 1];
-  
-  // Create a mapping of folder IDs to folders for quick lookup
-  const folderMap = folderPath.reduce((map, folder) => {
-    map[folder.id] = folder;
-    return map;
-  }, {} as Record<string, Folder>);
-  
-  // Build the actual hierarchy
-  const hierarchy: Folder[] = [];
-  let folder = currentFolder;
-  
-  // Add the current folder first
-  hierarchy.unshift(folder);
-  
-  // Build the hierarchy by traversing up the parent chain
-  while (folder && folder.parent_folder_id && folderMap[folder.parent_folder_id]) {
-    folder = folderMap[folder.parent_folder_id];
-    hierarchy.unshift(folder);
+  if (!folderPath || folderPath.length === 0) {
+    return (
+      <Breadcrumb className="mb-4 bg-muted/20 py-2 px-3 rounded-md">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink 
+              onClick={() => onNavigate(null)}
+              className="hover:text-foreground cursor-pointer flex items-center"
+            >
+              <HomeIcon className="h-4 w-4 mr-1" />
+              <span>Root</span>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
   }
-  
+
+  // Ensure folderPath is properly ordered from root to current folder
+  const orderedPath = [...folderPath].sort((a, b) => {
+    // If a is a parent of b, a should come first
+    if (a.id === b.parent_folder_id) return -1;
+    // If b is a parent of a, b should come first
+    if (b.id === a.parent_folder_id) return 1;
+    // Otherwise, maintain their current order
+    return 0;
+  });
+
   return (
-    <Breadcrumb className="mb-4">
+    <Breadcrumb className="mb-4 bg-muted/20 py-2 px-3 rounded-md overflow-x-auto">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink 
             onClick={() => onNavigate(null)}
-            className="flex items-center hover:text-foreground"
+            className="hover:text-foreground cursor-pointer flex items-center"
           >
-            <HomeIcon className="h-3.5 w-3.5 mr-1" />
+            <HomeIcon className="h-4 w-4 mr-1" />
             <span>Root</span>
           </BreadcrumbLink>
         </BreadcrumbItem>
         
-        {hierarchy.map((folder) => {
-          // Find the original index in folderPath for navigation
-          const originalIndex = folderPath.findIndex(f => f.id === folder.id);
-          
-          return (
-            <BreadcrumbItem key={folder.id}>
-              <BreadcrumbSeparator />
-              <BreadcrumbLink 
-                onClick={() => onNavigate(originalIndex)}
-                className="hover:text-foreground truncate max-w-[200px]"
-              >
-                {folder.name}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          );
-        })}
+        {orderedPath.map((folder, index) => (
+          <BreadcrumbItem key={folder.id}>
+            <BreadcrumbSeparator />
+            <BreadcrumbLink 
+              onClick={() => onNavigate(index)}
+              className="hover:text-foreground truncate max-w-[200px] cursor-pointer flex items-center"
+              title={folder.name} // Add tooltip on hover
+            >
+              <FolderIcon className="h-4 w-4 mr-1 flex-shrink-0" />
+              <span className="truncate">{folder.name}</span>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        ))}
       </BreadcrumbList>
     </Breadcrumb>
   );

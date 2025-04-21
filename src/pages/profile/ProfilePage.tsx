@@ -17,6 +17,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { UsageStatisticsCharts } from "@/components/profile/UsageStatisticsCharts";
 
 const profileFormSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -96,7 +97,6 @@ const ProfilePage = () => {
       const file = e.target.files[0];
       setPhotoFile(file);
       
-      // Create a preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
@@ -112,7 +112,6 @@ const ProfilePage = () => {
     try {
       const { data, error } = await api.auth.updateProfilePhoto(photoFile);
       if (data) {
-        // Refetch profile to get updated photo URL
         const profileResponse = await api.auth.getProfile();
         if (profileResponse.data) {
           setProfile(profileResponse.data);
@@ -150,136 +149,151 @@ const ProfilePage = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
-    return format(new Date(dateString), 'MMM d, yyyy, h:mm a');
+    return format(new Date(dateString), 'MMM d, yyyy');
   };
 
   return (
-    <div className="container py-10 max-w-4xl">
+    <div className="container max-w-6xl py-8 px-4 sm:px-6 lg:px-8">
       <div className="flex items-center mb-6">
         <Button 
           variant="ghost" 
           size="sm" 
-          className="mr-2" 
+          className="mr-2 dark:text-white/80 hover:dark:text-white" 
           onClick={() => navigate(-1)}
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back
         </Button>
-        <h1 className="text-3xl font-bold">My Profile</h1>
+        <h1 className="text-2xl font-bold dark:text-white">My Profile</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left column - Photo and basic info */}
-        <div className="md:col-span-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Profile Info */}
+        <div className="space-y-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="relative mb-4">
+                  <Avatar className="h-24 w-24">
+                    {photoPreview ? (
+                      <AvatarImage src={photoPreview} alt="Profile preview" />
+                    ) : (
+                      <>
+                        <AvatarImage src={profile?.profile_photo_url} alt={profile?.first_name} />
+                        <AvatarFallback className="text-xl">{initials}</AvatarFallback>
+                      </>
+                    )}
+                  </Avatar>
+                  
+                  <label 
+                    htmlFor="photo-upload" 
+                    className="absolute bottom-0 right-0 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-2 cursor-pointer shadow-md transition-colors"
+                  >
+                    <Camera className="h-4 w-4" />
+                    <span className="sr-only">Upload new photo</span>
+                  </label>
+                  
+                  <input 
+                    id="photo-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handlePhotoChange}
+                  />
+                </div>
+
+                {photoFile && (
+                  <div className="flex gap-2 mt-2 justify-center">
+                    <Button onClick={handlePhotoUpload} disabled={isUploadingPhoto} size="sm">
+                      {isUploadingPhoto ? 'Uploading...' : 'Save Photo'}
+                    </Button>
+                    <Button onClick={cancelPhotoUpload} variant="outline" size="sm">
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+
+                <h3 className="text-xl font-semibold mt-4 mb-1">{profile?.first_name} {profile?.last_name}</h3>
+                <span className="text-sm text-muted-foreground mb-4">{profile?.email}</span>
+
+                <div className="w-full space-y-3 pt-4 border-t">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center text-muted-foreground">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Role
+                    </div>
+                    <span className="capitalize">{profile?.role.replace('_', ' ')}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center text-muted-foreground">
+                      <Badge className="h-4 w-4 mr-2" />
+                      Status
+                    </div>
+                    <span className="capitalize">{profile?.status}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center text-muted-foreground">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Last Login
+                    </div>
+                    <span>{profile?.last_login ? formatDate(profile.last_login) : 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
-            <CardHeader className="text-center pb-2">
-              <CardTitle>Profile Photo</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Account Status</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              <div className="relative mb-4 group">
-                <Avatar className="h-32 w-32">
-                  {photoPreview ? (
-                    <AvatarImage src={photoPreview} alt="Profile preview" />
-                  ) : (
-                    <>
-                      <AvatarImage src={profile?.profile_photo_url} alt={profile?.first_name} />
-                      <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-                    </>
-                  )}
-                </Avatar>
-                
-                <label 
-                  htmlFor="photo-upload" 
-                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer"
-                >
-                  <Camera className="h-4 w-4" />
-                  <span className="sr-only">Upload new photo</span>
-                </label>
-                
-                <input 
-                  id="photo-upload"
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handlePhotoChange}
-                />
-              </div>
-
-              {photoFile && (
-                <div className="flex gap-2 mt-2">
-                  <Button onClick={handlePhotoUpload} disabled={isUploadingPhoto} size="sm">
-                    {isUploadingPhoto ? 'Uploading...' : 'Save Photo'}
-                  </Button>
-                  <Button onClick={cancelPhotoUpload} variant="outline" size="sm">
-                    Cancel
-                  </Button>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Email Verified</span>
+                  <span>{profile?.email_verified ? 'Yes' : 'No'}</span>
                 </div>
-              )}
-
-              <div className="w-full mt-6 space-y-4">
-                <div className="flex items-center">
-                  <User className="h-4 w-4 mr-3 text-muted-foreground" />
-                  <span className="text-sm">{profile?.first_name} {profile?.last_name}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
-                  <span className="text-sm truncate">{profile?.email}</span>
-                </div>
-
-                <div className="flex items-center">
-                  <Shield className="h-4 w-4 mr-3 text-muted-foreground" />
-                  <span className="text-sm capitalize">{profile?.role.replace('_', ' ')}</span>
-                </div>
-
-                <div className="flex items-center">
-                  <Badge className="h-4 w-4 mr-3 text-muted-foreground" />
-                  <span className="text-sm capitalize">{profile?.status}</span>
-                </div>
-
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 mr-3 text-muted-foreground" />
-                  <span className="text-sm">
-                    Last login: {profile?.last_login ? formatDate(profile.last_login) : 'N/A'}
-                  </span>
-                </div>
-
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-3 text-muted-foreground" />
-                  <span className="text-sm">
-                    Created: {formatDate(profile?.created_at)}
-                  </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Last Updated</span>
+                  <span>{formatDate(profile?.updated_at)}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          {/* User ID Card */}
-          <Card className="mt-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">User Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex items-start">
-                <span className="font-medium min-w-24">User ID:</span>
-                <span className="text-muted-foreground break-all">{profile?.id}</span>
-              </div>
-              <div className="flex items-center">
-                <span className="font-medium min-w-24">Email Verified:</span>
-                <span className="text-muted-foreground">
-                  {profile?.email_verified ? 'Yes' : 'No'}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <span className="font-medium min-w-24">Updated At:</span>
-                <span className="text-muted-foreground">{formatDate(profile?.updated_at)}</span>
-              </div>
-            </CardContent>
-          </Card>
+
+          {/* Assigned Locations Card */}
+          {profile?.locations && profile.locations.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Assigned Locations</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-1">
+                <div className="space-y-1.5">
+                  {profile.locations.map((location) => (
+                    <div 
+                      key={location.location_id} 
+                      className="flex items-center p-2 rounded-md bg-accent/30 text-sm"
+                    >
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground mr-2 flex-shrink-0" />
+                      <span className="font-medium truncate">{location.location_name}</span>
+                      {location.is_primary && (
+                        <span className="ml-auto text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                          Primary
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Right column - User information form */}
-        <div className="md:col-span-8">
+        {/* Right Column - Forms and Charts */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Personal Information Card */}
           <Card>
             <CardHeader>
               <CardTitle>Personal Information</CardTitle>
@@ -318,7 +332,7 @@ const ProfilePage = () => {
                     />
                   </div>
 
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end">
                     <Button
                       type="submit"
                       disabled={isUpdating || !form.formState.isDirty}
@@ -331,80 +345,22 @@ const ProfilePage = () => {
             </CardContent>
           </Card>
 
-          {/* Usage Statistics */}
-          <Card className="mt-6">
+          {/* Usage Statistics Card */}
+          <Card>
             <CardHeader>
               <CardTitle>Usage Statistics</CardTitle>
+              <CardDescription>Your token usage overview</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span>Chat Tokens Used:</span>
-                  <span className="font-medium">{profile?.chat_tokens_used ?? 'N/A'}</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span>Document Processing Tokens Used:</span>
-                  <span className="font-medium">{profile?.document_processing_tokens_used ?? 'N/A'}</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span>Daily Chat Tokens Used:</span>
-                  <span className="font-medium">{profile?.daily_chat_tokens_used ?? 'N/A'}</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span>Daily Document Processing Tokens Used:</span>
-                  <span className="font-medium">{profile?.daily_document_processing_tokens_used ?? 'N/A'}</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span>Daily Token Limit:</span>
-                  <span className="font-medium">{profile?.daily_token_limit ?? 'N/A'}</span>
-                </div>
-              </div>
+              <UsageStatisticsCharts
+                chatTokens={profile?.chat_tokens_used ?? 0}
+                documentTokens={profile?.document_processing_tokens_used ?? 0}
+                dailyChatTokens={profile?.daily_chat_tokens_used ?? 0}
+                dailyDocumentTokens={profile?.daily_document_processing_tokens_used ?? 0}
+                dailyLimit={profile?.daily_token_limit ?? 0}
+              />
             </CardContent>
           </Card>
-          
-          {/* User Locations */}
-          {profile?.locations && profile.locations.length > 0 && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Assigned Locations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {profile.locations.map((location) => (
-                    <div key={location.location_id} className="p-4 border rounded-md">
-                      <div className="flex items-center mb-2">
-                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="font-medium">{location.location_name}</span>
-                        {location.is_primary && (
-                          <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                            Primary
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground flex flex-col gap-1">
-                        <div className="flex justify-between">
-                          <span>Location ID:</span>
-                          <span className="font-mono text-xs">{location.location_id}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Added:</span>
-                          <span>{formatDate(location.created_at)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Updated:</span>
-                          <span>{formatDate(location.updated_at)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
@@ -412,3 +368,4 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
+

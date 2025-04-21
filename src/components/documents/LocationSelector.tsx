@@ -54,11 +54,11 @@ const LocationSelector = ({
           <Button 
             variant="outline" 
             size="sm" 
-            className={`flex items-center gap-2 min-w-[180px] justify-start transition-all duration-200 hover:bg-accent/50 ${required && !selectedLocation ? 'border-destructive ring-1 ring-destructive/30' : ''}`}
+            className={`flex items-center gap-2 min-w-[180px] justify-start transition-all duration-200 hover:bg-accent/50 dark:text-white dark:border-slate-700 ${required && !selectedLocation ? 'border-destructive ring-1 ring-destructive/30' : ''}`}
             disabled={disabled}
           >
             <MapPin className="h-4 w-4 text-primary/80" />
-            <span className="truncate font-medium">{selectedLocation?.location_name || "Select location"}</span>
+            <span className="truncate font-medium text-foreground dark:text-white">{selectedLocation?.location_name || "Select location"}</span>
             {isPrimaryLocation && <span className="ml-1 text-xs text-primary font-medium">(Primary)</span>}
             {required && !selectedLocation && <span className="text-destructive ml-1">*</span>}
           </Button>

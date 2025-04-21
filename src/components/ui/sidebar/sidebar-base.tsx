@@ -9,7 +9,6 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useSidebar } from "./use-sidebar";
 import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON, SIDEBAR_WIDTH_MOBILE } from "./sidebar-types";
 
-// Main Sidebar component
 const Sidebar = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
@@ -76,7 +75,6 @@ const Sidebar = React.forwardRef<
         data-side={side}
         data-pinned={isPinned ? "true" : "false"}
       >
-        {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
             "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
@@ -93,11 +91,9 @@ const Sidebar = React.forwardRef<
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-            // Adjust the padding for floating and inset variants.
             variant === "floating" || variant === "inset"
               ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
-            // Add hover functionality when not pinned
             "group-data-[pinned=false]:group-data-[state=collapsed]:hover:w-[--sidebar-width] group-data-[pinned=false]:group-data-[state=collapsed]:hover:shadow-xl group-data-[pinned=false]:group-data-[state=collapsed]:z-20",
             className
           )}
@@ -107,25 +103,22 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow relative"
+            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-lg relative"
           >
             {children}
             
-            {/* Pin button in the top-right corner */}
-            {!isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "absolute top-3 right-3 h-6 w-6 text-muted-foreground transition-opacity",
-                  state === "collapsed" && !isPinned ? "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto" : ""
-                )}
-                onClick={() => setIsPinned(!isPinned)}
-                title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
-              >
-                {isPinned ? <PinOff size={14} /> : <Pin size={14} />}
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "absolute top-3 right-3 h-7 w-7 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-opacity",
+                state === "collapsed" && !isPinned ? "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto" : ""
+              )}
+              onClick={() => setIsPinned(!isPinned)}
+              title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+            >
+              {isPinned ? <PinOff size={16} /> : <Pin size={16} />}
+            </Button>
           </div>
         </div>
       </div>
@@ -134,7 +127,6 @@ const Sidebar = React.forwardRef<
 );
 Sidebar.displayName = "Sidebar";
 
-// Sidebar trigger button
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
@@ -161,7 +153,6 @@ const SidebarTrigger = React.forwardRef<
 });
 SidebarTrigger.displayName = "SidebarTrigger";
 
-// Sidebar input component
 const SidebarInput = React.forwardRef<
   React.ElementRef<typeof Input>,
   React.ComponentProps<typeof Input>
@@ -171,7 +162,7 @@ const SidebarInput = React.forwardRef<
       ref={ref}
       data-sidebar="input"
       className={cn(
-        "h-8 w-full bg-background shadow-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+        "h-8 w-full bg-background text-foreground shadow-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
         className
       )}
       {...props}

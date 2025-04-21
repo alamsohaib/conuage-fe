@@ -66,43 +66,53 @@ const EditDocumentDialog = ({
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit Document</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="dark:text-white">Edit Document</DialogTitle>
+            <DialogDescription className="dark:text-white/80">
               Update the document details.
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="documentName">Document Name</Label>
+              <Label htmlFor="documentName" className="dark:text-white/80">Document Name</Label>
               <Input
                 id="documentName"
                 placeholder="Enter document name"
                 value={documentName}
                 onChange={(e) => setDocumentName(e.target.value)}
                 autoFocus
+                className="dark:text-white dark:placeholder:text-white/60"
               />
             </div>
             
             {document && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm text-muted-foreground">File Type</Label>
-                  <div className="font-medium">{document.file_type}</div>
+                  <Label className="text-sm text-muted-foreground dark:text-white/60">File Type</Label>
+                  <div className="font-medium dark:text-white/80">{document.file_type}</div>
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Page Count</Label>
-                  <div className="font-medium">{document.page_count}</div>
+                  <Label className="text-sm text-muted-foreground dark:text-white/60">Page Count</Label>
+                  <div className="font-medium dark:text-white/80">{document.page_count}</div>
                 </div>
               </div>
             )}
           </div>
           
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose}
+              className="dark:text-white dark:hover:bg-gray-700"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="dark:text-white dark:hover:brightness-125"
+            >
               {isSubmitting ? (
                 <>
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />

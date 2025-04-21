@@ -35,19 +35,14 @@ const CreateFolderDialog = ({
     
     setIsSubmitting(true);
     
-    // Create the payload without parent_folder_id
     const payload: any = {
       name: folderName.trim(),
       location_id: locationId
     };
     
-    // Only add parent_folder_id if it exists
     if (parentFolderId) {
       payload.parent_folder_id = parentFolderId;
     }
-    // Important: For root folders, we completely omit the parent_folder_id field
-    
-    console.log("Creating folder with payload:", payload);
     
     const { data, error } = await api.documentManagement.createFolder(payload);
     
@@ -57,6 +52,8 @@ const CreateFolderDialog = ({
       setFolderName("");
       toast.success("Folder created successfully");
       onSuccess();
+      window.dispatchEvent(new Event('refresh-folders'));
+      onClose();
     } else if (error) {
       toast.error(error.message || "Failed to create folder");
     }
@@ -72,8 +69,8 @@ const CreateFolderDialog = ({
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Folder</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="dark:text-white">Create New Folder</DialogTitle>
+            <DialogDescription className="dark:text-white/80">
               Enter a name for your new folder.
               {parentFolderId ? " It will be created inside the current folder." : " It will be created at the root level."}
             </DialogDescription>
@@ -81,22 +78,32 @@ const CreateFolderDialog = ({
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="folderName">Folder Name</Label>
+              <Label htmlFor="folderName" className="dark:text-white/80">Folder Name</Label>
               <Input
                 id="folderName"
                 placeholder="Enter folder name"
                 value={folderName}
                 onChange={(e) => setFolderName(e.target.value)}
                 autoFocus
+                className="dark:text-white dark:placeholder:text-white/60"
               />
             </div>
           </div>
           
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose}
+              className="dark:text-white dark:hover:bg-gray-700"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="dark:text-white dark:hover:brightness-125"
+            >
               {isSubmitting ? (
                 <>
                   <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
@@ -114,3 +121,4 @@ const CreateFolderDialog = ({
 };
 
 export default CreateFolderDialog;
+

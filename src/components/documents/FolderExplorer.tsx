@@ -1,191 +1,32 @@
-import { useState, useEffect, useCallback } from "react";
+
+import React, { useState, useEffect, useCallback } from "react";
 import { api } from "@/services/api";
 import { Folder } from "@/lib/types";
-import { Folder as FolderIcon, ChevronRight, ChevronDown, Loader2, RefreshCw, AlertCircle, WifiOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { 
+  Loader2, 
+  AlertCircle,
+  RefreshCw,
+  WifiOff
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import FolderTreeItem from "./FolderTreeItem";
+import { Button } from "@/components/ui/button";
 
 interface FolderExplorerProps {
   locationId: string;
   currentFolder: Folder | null;
   onFolderSelect: (folder: Folder) => void;
   folderPath: Folder[];
-}
-
-interface FolderTreeItemProps {
-  folder: Folder;
-  depth: number;
-  isActive: boolean;
-  onSelect: (folder: Folder) => void;
-  folderPath: Folder[];
+  onFolderDelete?: () => void;
+  onAuthError?: () => void;
 }
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
-const FolderTreeItem = ({ folder, depth, isActive, onSelect, folderPath }: FolderTreeItemProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [subfolders, setSubfolders] = useState<Folder[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-
-  useEffect(() => {
-    const isInPath = folderPath.some(pathFolder => pathFolder.id === folder.id);
-    if (isInPath && !isExpanded) {
-      setIsExpanded(true);
-    }
-  }, [folderPath, folder.id, isExpanded]);
-
-  const loadSubfolders = useCallback(async (retry = 0) => {
-    if (!isExpanded) return;
-    
-    setIsLoading(true);
-    setHasError(false);
-    
-    try {
-      console.log(`Loading subfolders for folder ${folder.id} in location ${folder.location_id} (Attempt ${retry + 1})`);
-      const { data, error } = await api.documentManagement.getFolders(folder.location_id, folder.id);
-      
-      if (data) {
-        console.log(`Successfully loaded ${Array.isArray(data) ? data.length : data.folders?.length || 0} subfolders for folder ${folder.id}`);
-        const folderArray = Array.isArray(data) ? data : (data.folders || []);
-        setSubfolders(folderArray);
-        setRetryCount(0);
-      } else if (error) {
-        console.error(`Failed to load subfolders (Attempt ${retry + 1}):`, error);
-        
-        if (retry < MAX_RETRIES) {
-          const backoffDelay = RETRY_DELAY * Math.pow(2, retry);
-          console.log(`Retrying in ${backoffDelay}ms...`);
-          setTimeout(() => loadSubfolders(retry + 1), backoffDelay);
-          setRetryCount(retry + 1);
-        } else {
-          setHasError(true);
-          setRetryCount(0);
-        }
-      }
-    } catch (err) {
-      console.error(`Exception when loading subfolders (Attempt ${retry + 1}):`, err);
-      
-      if (retry < MAX_RETRIES) {
-        const backoffDelay = RETRY_DELAY * Math.pow(2, retry);
-        console.log(`Retrying in ${backoffDelay}ms...`);
-        setTimeout(() => loadSubfolders(retry + 1), backoffDelay);
-        setRetryCount(retry + 1);
-      } else {
-        setHasError(true);
-        setRetryCount(0);
-      }
-    } finally {
-      if (retry === MAX_RETRIES || retry === 0) {
-        setIsLoading(false);
-      }
-    }
-  }, [folder.id, folder.location_id, isExpanded]);
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
-  };
-
-  const handleRetry = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    loadSubfolders();
-  };
-
-  useEffect(() => {
-    if (isExpanded) {
-      loadSubfolders();
-    }
-  }, [isExpanded, loadSubfolders]);
-
-  return (
-    <div>
-      <div 
-        className={cn(
-          "flex items-center py-1 px-2 rounded-md",
-          isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
-        )}
-      >
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-5 w-5 p-0 mr-1" 
-          onClick={handleToggle}
-          aria-label={isExpanded ? "Collapse folder" : "Expand folder"}
-        >
-          {isLoading ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : retryCount > 0 ? (
-            <AlertCircle className="h-3 w-3 text-amber-500" />
-          ) : isExpanded ? (
-            <ChevronDown className="h-3 w-3" />
-          ) : (
-            <ChevronRight className="h-3 w-3" />
-          )}
-        </Button>
-        
-        <button
-          className={cn(
-            "flex items-center text-sm truncate w-full text-left py-1",
-            isActive ? "font-medium" : "font-normal"
-          )}
-          onClick={() => onSelect(folder)}
-          style={{ paddingLeft: `${depth * 0.5}rem` }}
-        >
-          <FolderIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-          <span className="truncate">{folder.name}</span>
-        </button>
-      </div>
-
-      {isExpanded && (
-        <div className="pl-4">
-          {hasError ? (
-            <div className="py-2 px-2 text-sm text-destructive flex items-center">
-              <span>Failed to load</span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-5 w-5 ml-1" 
-                      onClick={handleRetry}
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Retry loading subfolders</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          ) : subfolders.length > 0 ? (
-            subfolders.map((subfolder) => (
-              <FolderTreeItem
-                key={subfolder.id}
-                folder={subfolder}
-                depth={depth + 1}
-                isActive={subfolder.id === folder.id}
-                onSelect={onSelect}
-                folderPath={folderPath}
-              />
-            ))
-          ) : !isLoading && (
-            <div className="text-sm text-muted-foreground py-1 px-6">No subfolders</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath }: FolderExplorerProps) => {
+const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath, onFolderDelete, onAuthError }: FolderExplorerProps) => {
   const [rootFolders, setRootFolders] = useState<Folder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -237,6 +78,15 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath 
       } else if (error) {
         console.error(`Attempt ${retry + 1} failed:`, error);
         
+        // Check if this is an authentication error (401)
+        const isUnauthorized = error.code === '401' || error.message.includes('401') || error.message.toLowerCase().includes('unauthorized');
+        
+        if (isUnauthorized && onAuthError) {
+          console.log("Authentication error detected in folder explorer");
+          onAuthError();
+          return;
+        }
+        
         if (retry < MAX_RETRIES) {
           const backoffDelay = RETRY_DELAY * Math.pow(2, retry);
           console.log(`Retrying in ${backoffDelay}ms...`);
@@ -252,6 +102,16 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath 
       }
     } catch (err) {
       console.error(`Exception on attempt ${retry + 1}:`, err);
+      
+      // Check if this is an authentication error
+      if (err instanceof Error && 
+         (err.message.includes('401') || 
+          err.message.toLowerCase().includes('unauthorized'))) {
+        if (onAuthError) {
+          onAuthError();
+          return;
+        }
+      }
       
       if (retry < MAX_RETRIES) {
         const backoffDelay = RETRY_DELAY * Math.pow(2, retry);
@@ -271,7 +131,20 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath 
         setIsRetrying(false);
       }
     }
-  }, [locationId]);
+  }, [locationId, onAuthError]);
+
+  useEffect(() => {
+    const handleFolderChange = () => {
+      console.log("Refreshing folder list...");
+      loadRootFolders();
+    };
+
+    window.addEventListener('refresh-folders', handleFolderChange);
+    
+    return () => {
+      window.removeEventListener('refresh-folders', handleFolderChange);
+    };
+  }, [loadRootFolders]);
 
   const handleManualRetry = () => {
     loadRootFolders();
@@ -364,6 +237,10 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath 
                 isActive={currentFolder?.id === folder.id}
                 onSelect={onFolderSelect}
                 folderPath={folderPath}
+                locationId={locationId}
+                currentFolder={currentFolder}
+                onFolderDelete={onFolderDelete}
+                onAuthError={onAuthError}
               />
             ))}
           </div>

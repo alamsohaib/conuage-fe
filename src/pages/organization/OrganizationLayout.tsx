@@ -29,9 +29,11 @@ const OrganizationLayout = () => {
           <div className="p-2 bg-primary/10 rounded-md">
             <Building className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Organization Management</h1>
+          <h1 className="text-2xl font-bold text-foreground dark:text-white">
+            Organization Management
+          </h1>
         </div>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 dark:text-white/80">
           Configure your organization settings, manage locations, and control user access
         </p>
       </div>

@@ -10,20 +10,27 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+// Function to get the initial theme that works in both browser and SSR contexts
+const getInitialTheme = (): Theme => {
+  // For SSR or when window is not available, return a default theme
+  if (typeof window === 'undefined') return 'light';
+  
+  // Check localStorage first
+  const savedTheme = window.localStorage.getItem('theme') as Theme;
+  if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+  
+  // Check system preference
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+  
+  // Default to light
+  return 'light';
+};
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) return savedTheme;
-    
-    // Check system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    
-    // Default to light
-    return 'light';
-  });
+  // Use state initializer function to avoid issues during SSR
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
     // Update localStorage
