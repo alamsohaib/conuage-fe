@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Brain, Mail, Phone, MessageSquare, Send, User } from "lucide-react";
@@ -24,27 +23,63 @@ type FormData = {
   email: string;
   phone?: string;
   services: string[];
-  message?: string;
+  message: string;
   referral?: string;
 };
 
 const BookDemo = () => {
   const navigate = useNavigate();
   const { handleSubmit, register, control, formState: { errors, isSubmitting }, reset } = useForm<FormData>({
-    defaultValues: { services: [] }
+    defaultValues: { 
+      services: [],
+    }
   });
 
   const onSubmit = async (data: FormData) => {
-    toast({
-      title: "Request received!",
-      description: "We have received your demo request. We'll reach out soon."
-    });
-    reset();
+    try {
+      const services_interested: Record<string, boolean> = {};
+      data.services.forEach(service => {
+        services_interested[service] = true;
+      });
+
+      const response = await fetch('https://conuage-be-production.up.railway.app/api/v1/bookings/demo-booking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          phone: data.phone || '',
+          services_interested: services_interested,
+          how_can_we_help: data.message || '',
+          where_did_you_hear: data.referral || '',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error submitting form:', errorData);
+        throw new Error(errorData.detail?.[0]?.msg || 'Failed to submit form');
+      }
+
+      toast({
+        title: "Demo request received!",
+        description: "We have received your demo request. Our team will reach out soon."
+      });
+      reset();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Submission failed",
+        description: error instanceof Error ? error.message : "Failed to submit the form. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
       <header className="border-b border-border/50 py-4">
         <div className="container flex justify-between items-center">
           <div className="flex items-center space-x-1 cursor-pointer" onClick={() => navigate("/")}>
@@ -67,7 +102,6 @@ const BookDemo = () => {
         </div>
       </header>
 
-      {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-b from-primary/5 to-transparent">
         <Card className="max-w-lg w-full mx-auto shadow-elevated bg-card/90 p-0 md:p-4 rounded-2xl">
           <div className="p-8 md:p-10">
@@ -77,7 +111,6 @@ const BookDemo = () => {
             <p className="text-lg text-muted-foreground text-center mb-8">Tell us a bit about your needs and we'll get in touch!</p>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid gap-5">
-                {/* NAME field */}
                 <div>
                   <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-white block mb-1">
                     Name <span className="text-destructive">*</span>
@@ -87,7 +120,9 @@ const BookDemo = () => {
                     <Input
                       id="name"
                       placeholder="Your full name"
-                      {...register("name", { required: "Name is required" })}
+                      {...register("name", { 
+                        required: "Name is required" 
+                      })}
                       error={errors.name?.message}
                       required
                       autoComplete="name"
@@ -100,7 +135,6 @@ const BookDemo = () => {
                   )}
                 </div>
 
-                {/* EMAIL field */}
                 <div>
                   <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-white block mb-1">
                     Email <span className="text-destructive">*</span>
@@ -129,7 +163,6 @@ const BookDemo = () => {
                   )}
                 </div>
 
-                {/* PHONE field */}
                 <div>
                   <label htmlFor="phone" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-white block mb-1">
                     Phone
@@ -151,7 +184,6 @@ const BookDemo = () => {
                   )}
                 </div>
 
-                {/* SERVICES checkboxes */}
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
                     Please check the service you are most interested in <span className="text-destructive">*</span>
@@ -160,7 +192,7 @@ const BookDemo = () => {
                     control={control}
                     name="services"
                     rules={{
-                      validate: v => (v && v.length > 0) || "Select at least one"
+                      required: "Please select at least one service"
                     }}
                     render={({ field }) => (
                       <div className="grid grid-cols-1 gap-3">
@@ -184,11 +216,10 @@ const BookDemo = () => {
                     )}
                   />
                   {errors.services && (
-                    <p className="text-xs text-destructive mt-1">{errors.services.message?.toString()}</p>
+                    <p className="text-xs text-destructive mt-1">{errors.services.message}</p>
                   )}
                 </div>
 
-                {/* MESSAGE textarea */}
                 <div>
                   <label className="text-sm font-medium text-foreground block mb-2">
                     Let us know how we can help you <span className="text-destructive">*</span>
@@ -196,14 +227,18 @@ const BookDemo = () => {
                   <div className="relative flex items-start border border-input rounded-md bg-background px-3 pt-2 pb-1 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                     <MessageSquare className="h-5 w-5 text-muted-foreground mr-2 flex-shrink-0 mt-[3px]" />
                     <Textarea
-                      {...register("message")}
+                      {...register("message", {
+                        required: "Please tell us how we can help you"
+                      })}
                       className="resize-none min-h-[100px] border-none p-0 focus:ring-0 focus-visible:ring-0"
                       placeholder="Describe your requirements or use case"
                     />
                   </div>
+                  {errors.message && (
+                    <p className="text-xs text-destructive mt-1">{errors.message.message}</p>
+                  )}
                 </div>
 
-                {/* REFERRAL */}
                 <Input
                   label="Where did you hear about us?"
                   placeholder="e.g., Google, LinkedIn, Friend"
@@ -226,7 +261,6 @@ const BookDemo = () => {
         </Card>
       </main>
 
-      {/* Footer */}
       <footer className="py-10 border-t border-border/50 mt-20">
         <div className="container flex flex-col md:flex-row justify-between items-center">
           <div
@@ -267,4 +301,3 @@ const BookDemo = () => {
 };
 
 export default BookDemo;
-

@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { api } from "@/services/api";
 import { Token, User, Profile, UserRole, UpdateProfileRequest } from "@/lib/types";
@@ -359,7 +358,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const { error } = await api.auth.signUp({ email, password, firstName, lastName });
+      // Only send the required fields to the API
+      const { error } = await api.auth.signUp({ 
+        email, 
+        password, 
+        first_name: firstName, 
+        last_name: lastName
+      });
       
       if (error) {
         toast.error(error.message || "Signup failed");
@@ -380,10 +385,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const verifyEmail = async (email: string, code: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const { error } = await api.auth.verifyEmail({ email, code });
+      console.log("Verifying email for:", email, "with code:", code);
+      
+      // Make the direct API call with the correct structure
+      const { error } = await api.auth.verifyEmail({ 
+        email, 
+        code 
+      });
       
       if (error) {
-        toast.error(error.message || "Email verification failed");
+        // Check for specific server errors related to the parsing issue
+        if (error.message && (error.message.includes('PGRST100') || error.message.includes('parse order'))) {
+          toast.error("Server error. Our team has been notified. Please try again later.");
+        } else {
+          toast.error(error.message || "Email verification failed");
+        }
         return false;
       }
       
@@ -392,7 +408,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Verify email error:", error);
       toast.error("An unexpected error occurred");
-      return false;
+      // Re-throw the error so the form component can handle it
+      throw error;
     } finally {
       setIsLoading(false);
     }

@@ -1,8 +1,8 @@
 export type UserSignUp = {
   email: string;
   password: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
 };
 
 export type VerifyEmail = {
@@ -20,9 +20,8 @@ export type ForgotPassword = {
 };
 
 export type ResetPassword = {
-  email: string;
   code: string;
-  password: string;
+  new_password: string;
 };
 
 export type ChangePassword = {
@@ -148,6 +147,7 @@ export type Folder = {
   created_at: string;
   updated_at: string;
   created_by: string;
+  children?: Folder[]; // Add support for nested children
 };
 
 export type FolderList = {

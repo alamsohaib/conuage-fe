@@ -1,12 +1,13 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/ui-custom/Button";
 import Input from "@/components/ui-custom/Input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 
 const resetPasswordSchema = z.object({
   code: z.string().min(6, "Verification code must be at least 6 characters"),
@@ -24,11 +25,13 @@ const resetPasswordSchema = z.object({
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
-const ResetPasswordForm = () => {
+interface ResetPasswordFormProps {
+  email: string | null;
+}
+
+const ResetPasswordForm = ({ email }: ResetPasswordFormProps) => {
   const { resetPassword } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const email = searchParams.get("email") || "";
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -45,18 +48,49 @@ const ResetPasswordForm = () => {
   });
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
-    if (!email) return;
+    if (!email) {
+      toast.error("No email found. Please try the reset password process again.");
+      navigate("/auth/forgot-password");
+      return;
+    }
     
     setIsSubmitting(true);
     try {
+      console.log(`Attempting to reset password for ${email} with code ${data.code}`);
+      // We still pass email for internal tracking, even though the API doesn't need it
       const success = await resetPassword(email, data.code, data.password);
+      
       if (success) {
+        toast.success("Password has been reset successfully!");
+        // Clear the stored email since we're done with the process
+        sessionStorage.removeItem("reset_password_email");
         navigate("/auth/login");
       }
+    } catch (error) {
+      console.error("Error during password reset:", error);
+      toast.error("Failed to reset password. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // If no email is available, show a message and a link back to forgot password
+  if (!email) {
+    return (
+      <div className="space-y-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          No email address found. Please restart the password reset process.
+        </p>
+        <Button
+          onClick={() => navigate("/auth/forgot-password")}
+          type="button"
+          className="w-full mt-4"
+        >
+          Back to Forgot Password
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

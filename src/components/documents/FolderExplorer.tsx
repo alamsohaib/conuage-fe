@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import { api } from "@/services/api";
 import { Folder } from "@/lib/types";
 import { 
@@ -21,12 +20,14 @@ interface FolderExplorerProps {
   folderPath: Folder[];
   onFolderDelete?: () => void;
   onAuthError?: () => void;
+  setAllFolders?: Dispatch<SetStateAction<Folder[]>>;
 }
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
-const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath, onFolderDelete, onAuthError }: FolderExplorerProps) => {
+const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath, onFolderDelete, onAuthError, setAllFolders }: FolderExplorerProps) => {
+  const [allFolders, setAllFoldersState] = useState<Folder[]>([]);
   const [rootFolders, setRootFolders] = useState<Folder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,11 +50,11 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath,
 
   useEffect(() => {
     if (!isOffline && locationId) {
-      loadRootFolders();
+      loadFolders();
     }
   }, [isOffline, locationId]);
   
-  const loadRootFolders = useCallback(async (retry = 0) => {
+  const loadFolders = useCallback(async (retry = 0) => {
     if (!locationId) return;
     
     if (retry === 0) {
@@ -64,33 +65,36 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath,
     }
     
     try {
-      console.log(`Attempt ${retry + 1} to fetch folders for location: ${locationId}`);
-      console.log(`Using locationId: "${locationId}" - Type: ${typeof locationId}`);
+      console.log(`Attempt ${retry + 1} to fetch all folders for location: ${locationId}`);
       
-      const { data, error } = await api.documentManagement.getFolders(locationId);
+      const { data, error } = await api.documentManagement.getAllFolders(locationId);
       
       if (data) {
-        console.log("Successfully loaded folders:", data);
-        const folderArray = Array.isArray(data) ? data : (data.folders || []);
+        console.log("Successfully loaded all folders:", data);
+        const folderArray = Array.isArray(data) ? data : [];
+        const flattenedFolders = flattenFolderStructure(folderArray);
+        setAllFoldersState(flattenedFolders);
+        
+        if (setAllFolders) {
+          setAllFolders(flattenedFolders);
+        }
+        
         setRootFolders(folderArray);
         setRetryCount(0);
         setError(null);
       } else if (error) {
         console.error(`Attempt ${retry + 1} failed:`, error);
         
-        // Check if this is an authentication error (401)
-        const isUnauthorized = error.code === '401' || error.message.includes('401') || error.message.toLowerCase().includes('unauthorized');
-        
-        if (isUnauthorized && onAuthError) {
+        if (error.code === '401' || error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')) {
           console.log("Authentication error detected in folder explorer");
-          onAuthError();
+          onAuthError?.();
           return;
         }
         
         if (retry < MAX_RETRIES) {
           const backoffDelay = RETRY_DELAY * Math.pow(2, retry);
           console.log(`Retrying in ${backoffDelay}ms...`);
-          setTimeout(() => loadRootFolders(retry + 1), backoffDelay);
+          setTimeout(() => loadFolders(retry + 1), backoffDelay);
           setRetryCount(retry + 1);
         } else {
           setError(error.message || "Failed to load folders");
@@ -103,20 +107,17 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath,
     } catch (err) {
       console.error(`Exception on attempt ${retry + 1}:`, err);
       
-      // Check if this is an authentication error
       if (err instanceof Error && 
          (err.message.includes('401') || 
           err.message.toLowerCase().includes('unauthorized'))) {
-        if (onAuthError) {
-          onAuthError();
-          return;
-        }
+        onAuthError?.();
+        return;
       }
       
       if (retry < MAX_RETRIES) {
         const backoffDelay = RETRY_DELAY * Math.pow(2, retry);
         console.log(`Retrying in ${backoffDelay}ms...`);
-        setTimeout(() => loadRootFolders(retry + 1), backoffDelay);
+        setTimeout(() => loadFolders(retry + 1), backoffDelay);
         setRetryCount(retry + 1);
       } else {
         setError("Network error. Please check your connection and try again.");
@@ -131,12 +132,28 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath,
         setIsRetrying(false);
       }
     }
-  }, [locationId, onAuthError]);
+  }, [locationId, onAuthError, setAllFolders]);
+
+  const flattenFolderStructure = (folders: Folder[]): Folder[] => {
+    let flattenedFolders: Folder[] = [];
+    
+    const processFolders = (currentFolders: Folder[]) => {
+      currentFolders.forEach(folder => {
+        flattenedFolders.push({ ...folder });
+        if (folder.children && folder.children.length > 0) {
+          processFolders(folder.children);
+        }
+      });
+    };
+    
+    processFolders(folders);
+    return flattenedFolders;
+  };
 
   useEffect(() => {
     const handleFolderChange = () => {
-      console.log("Refreshing folder list...");
-      loadRootFolders();
+      console.log("Refreshing folder list due to external event...");
+      loadFolders();
     };
 
     window.addEventListener('refresh-folders', handleFolderChange);
@@ -144,18 +161,16 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath,
     return () => {
       window.removeEventListener('refresh-folders', handleFolderChange);
     };
-  }, [loadRootFolders]);
+  }, [loadFolders]);
 
   const handleManualRetry = () => {
-    loadRootFolders();
+    loadFolders();
   };
 
-  useEffect(() => {
-    if (locationId) {
-      console.log("LocationID changed, loading root folders for location:", locationId);
-      loadRootFolders();
-    }
-  }, [locationId, loadRootFolders]);
+  const getChildFolders = useCallback((folderId: string): Folder[] => {
+    const folder = allFolders.find(f => f.id === folderId);
+    return folder?.children || [];
+  }, [allFolders]);
 
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
@@ -241,6 +256,8 @@ const FolderExplorer = ({ locationId, currentFolder, onFolderSelect, folderPath,
                 currentFolder={currentFolder}
                 onFolderDelete={onFolderDelete}
                 onAuthError={onAuthError}
+                allFolders={allFolders}
+                getChildFolders={getChildFolders}
               />
             ))}
           </div>

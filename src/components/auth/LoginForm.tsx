@@ -30,6 +30,7 @@ const LoginForm = () => {
     handleSubmit,
     formState: { errors },
     setValue,
+    getValues,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -66,20 +67,82 @@ const LoginForm = () => {
         }
       } else {
         // Direct API authentication
-        const success = await login(data.email, data.password);
-        
-        if (success) {
-          console.log("Login successful");
-          toast.success("Login successful");
-          // Navigation is handled in the AuthContext
-        } else {
-          console.log("Login failed");
-          setLoginError("Login failed. This may be due to CORS restrictions with the API. If you continue to experience issues, you can enable test accounts.");
+        try {
+          const response = await fetch('https://conuage-be-production.up.railway.app/api/v1/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              username: data.email,
+              password: data.password
+            })
+          });
+          
+          const responseData = await response.json();
+          console.log("Login API response:", responseData);
+          
+          if (response.ok) {
+            // Handle successful login
+            const success = await login(data.email, data.password);
+            if (success) {
+              console.log("Login successful");
+              toast.success("Login successful");
+            }
+          } else {
+            // Handle API errors
+            console.error("Login API error:", responseData);
+            
+            // Check if email is not verified
+            if (responseData && 
+                responseData.detail && 
+                typeof responseData.detail === 'string' && 
+                responseData.detail.toLowerCase().includes('email not verified')) {
+              console.log("Email not verified, redirecting to verification page");
+              // Save the email in session storage before redirecting
+              sessionStorage.setItem("verification_email", data.email);
+              navigate(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
+              toast.info("Please verify your email to continue");
+              return;
+            } else {
+              // Handle other API errors
+              setLoginError(`Authentication error: ${responseData.detail}`);
+            }
+          }
+        } catch (error) {
+          console.error("Login error:", error);
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          
+          // Check if the error message includes "email not verified"
+          if (typeof errorMessage === 'string' && 
+              errorMessage.toLowerCase().includes("email not verified")) {
+            console.log("Email not verified error detected, redirecting to verification page");
+            // Save the email in session storage before redirecting
+            sessionStorage.setItem("verification_email", data.email);
+            navigate(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
+            toast.info("Please verify your email to continue");
+            return;
+          }
+          
+          setLoginError(`Authentication error: ${errorMessage}. This is likely due to CORS restrictions with the API. Try using test accounts if needed.`);
+          setShowDebugInfo(true);
         }
       }
     } catch (error) {
       console.error("Login error:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      
+      // Additional check for email verification errors
+      if (typeof errorMessage === 'string' && 
+          errorMessage.toLowerCase().includes("email not verified")) {
+        console.log("Email not verified error caught in outer catch, redirecting to verification page");
+        // Save the email in session storage before redirecting
+        sessionStorage.setItem("verification_email", data.email);
+        navigate(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
+        toast.info("Please verify your email to continue");
+        return;
+      }
+      
       setLoginError(`Authentication error: ${errorMessage}. This is likely due to CORS restrictions with the API. Try using test accounts if needed.`);
       setShowDebugInfo(true);
     } finally {

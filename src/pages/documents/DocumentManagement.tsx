@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Folder, Document, Location } from "@/lib/types";
@@ -42,6 +41,7 @@ const DocumentManagement = () => {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
+  const [allFolders, setAllFolders] = useState<Folder[]>([]);
   
   // Effect to redirect to login when authentication fails
   useEffect(() => {
@@ -152,63 +152,27 @@ const DocumentManagement = () => {
     navigate(-1);
   };
 
-  const handleFolderClick = async (folder: Folder) => {
+  const handleFolderClick = (folder: Folder) => {
     console.log("Selected folder:", folder);
     setCurrentFolder(folder);
     
-    try {
-      // Build folder path
-      const folderHierarchy = [];
-      let currentFolderNode = folder;
+    // Build folder path using allFolders
+    const path = [];
+    let currentNode = folder;
+    
+    // Add current folder to path
+    path.unshift(currentNode);
+    
+    // Traverse up the parent hierarchy using parent_folder_id
+    while (currentNode.parent_folder_id) {
+      const parentFolder = allFolders?.find(f => f.id === currentNode.parent_folder_id);
+      if (!parentFolder) break;
       
-      // Add the current folder
-      folderHierarchy.unshift(currentFolderNode);
-      
-      // Traverse up the parent hierarchy
-      while (currentFolderNode.parent_folder_id) {
-        const parentResponse = await api.documentManagement.getFolders(
-          currentFolderNode.location_id,
-          null
-        );
-        
-        if (parentResponse.error) {
-          const isUnauthorized = parentResponse.error.code === '401' || parentResponse.error.message.includes('401') || parentResponse.error.message.toLowerCase().includes('unauthorized');
-          
-          if (isUnauthorized) {
-            handleAuthError();
-            return;
-          }
-        }
-        
-        const folders = Array.isArray(parentResponse.data) 
-          ? parentResponse.data 
-          : (parentResponse.data?.folders || []);
-        
-        const parentFolder = folders.find(
-          f => f.id === currentFolderNode.parent_folder_id
-        );
-        
-        if (!parentFolder) break;
-        
-        folderHierarchy.unshift(parentFolder);
-        currentFolderNode = parentFolder;
-      }
-      
-      setFolderPath(folderHierarchy);
-    } catch (error) {
-      console.error("Error building folder path:", error);
-      
-      if (error instanceof Error && 
-         (error.message.includes('401') || 
-          error.message.toLowerCase().includes('unauthorized'))) {
-        handleAuthError();
-        return;
-      }
-      
-      toast.error("Failed to build folder path");
-      setFolderPath([folder]); // Fallback to just the current folder
+      path.unshift(parentFolder);
+      currentNode = parentFolder;
     }
     
+    setFolderPath(path);
     setSearchTerm("");
   };
 
@@ -389,6 +353,7 @@ const DocumentManagement = () => {
                   folderPath={folderPath}
                   onFolderDelete={handleFolderDelete}
                   onAuthError={handleAuthError}
+                  setAllFolders={setAllFolders}
                 />
               </div>
               

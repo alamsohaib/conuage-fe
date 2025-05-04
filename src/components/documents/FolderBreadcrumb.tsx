@@ -1,3 +1,4 @@
+
 import { Folder } from "@/lib/types";
 import {
   Breadcrumb,
@@ -32,16 +33,6 @@ const FolderBreadcrumb = ({ folderPath, onNavigate }: FolderBreadcrumbProps) => 
     );
   }
 
-  // Ensure folderPath is properly ordered from root to current folder
-  const orderedPath = [...folderPath].sort((a, b) => {
-    // If a is a parent of b, a should come first
-    if (a.id === b.parent_folder_id) return -1;
-    // If b is a parent of a, b should come first
-    if (b.id === a.parent_folder_id) return 1;
-    // Otherwise, maintain their current order
-    return 0;
-  });
-
   return (
     <Breadcrumb className="mb-4 bg-muted/20 py-2 px-3 rounded-md overflow-x-auto">
       <BreadcrumbList>
@@ -55,13 +46,13 @@ const FolderBreadcrumb = ({ folderPath, onNavigate }: FolderBreadcrumbProps) => 
           </BreadcrumbLink>
         </BreadcrumbItem>
         
-        {orderedPath.map((folder, index) => (
+        {folderPath.map((folder, index) => (
           <BreadcrumbItem key={folder.id}>
             <BreadcrumbSeparator />
             <BreadcrumbLink 
               onClick={() => onNavigate(index)}
               className="hover:text-foreground truncate max-w-[200px] cursor-pointer flex items-center"
-              title={folder.name} // Add tooltip on hover
+              title={folder.name}
             >
               <FolderIcon className="h-4 w-4 mr-1 flex-shrink-0" />
               <span className="truncate">{folder.name}</span>

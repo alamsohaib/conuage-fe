@@ -9,8 +9,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const signUpSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
-  last_name: z.string().min(1, "Last name is required"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email"),
   password: z
     .string()
@@ -30,6 +30,7 @@ const SignUpForm = () => {
   const { signup } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -38,8 +39,8 @@ const SignUpForm = () => {
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      first_name: "",
-      last_name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -48,16 +49,27 @@ const SignUpForm = () => {
 
   const onSubmit = async (data: SignUpFormValues) => {
     setIsSubmitting(true);
+    setError(null);
+    
     try {
+      // Only pass required fields to signup function
       const success = await signup(
         data.email,
         data.password,
-        data.first_name,
-        data.last_name
+        data.firstName,
+        data.lastName
       );
 
       if (success) {
+        // Store email in sessionStorage as a backup
+        sessionStorage.setItem("verification_email", data.email);
         navigate(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred during signup. Please try again later.");
       }
     } finally {
       setIsSubmitting(false);
@@ -69,15 +81,15 @@ const SignUpForm = () => {
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="First Name"
-          {...register("first_name")}
-          error={errors.first_name?.message}
+          {...register("firstName")}
+          error={errors.firstName?.message}
           placeholder="John"
           autoComplete="given-name"
         />
         <Input
           label="Last Name"
-          {...register("last_name")}
-          error={errors.last_name?.message}
+          {...register("lastName")}
+          error={errors.lastName?.message}
           placeholder="Doe"
           autoComplete="family-name"
         />
@@ -109,6 +121,12 @@ const SignUpForm = () => {
         placeholder="••••••••"
         autoComplete="new-password"
       />
+      
+      {error && (
+        <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
       
       <Button
         type="submit"

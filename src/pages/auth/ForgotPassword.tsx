@@ -1,8 +1,14 @@
 
+import { useEffect } from "react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 
 const ForgotPassword = () => {
+  useEffect(() => {
+    // Clear any previous reset password email when landing on forgot password page
+    sessionStorage.removeItem("reset_password_email");
+  }, []);
+  
   return (
     <AuthLayout
       title="Forgot password"

@@ -1,4 +1,4 @@
-import { ApiResponse, ChangePassword, ForgotPassword, LoginCredentials, ResetPassword, Token, User, UserSignUp, VerifyEmail, ApiError, Profile, ChatList, Chat, ChatDetails, CreateChatRequest, CreateMessageRequest, Folder, FolderList, CreateFolderRequest, UpdateFolderRequest, DeleteFolderResponse, Document, DocumentList, CreateDocumentRequest, UpdateDocumentRequest, DeleteDocumentResponse, ProcessDocumentResponse, Organization, UpdateOrganizationRequest, PricingPlanList, Subscription, UpdateSubscriptionRequest, OrganizationLocation, OrganizationLocationList, CreateLocationRequest, UpdateLocationRequest, OrganizationUser, OrganizationUserList, CreateUserRequest, UpdateUserRequest, UpdateProfileRequest } from "@/lib/types";
+import { ApiResponse, ChangePassword, ForgotPassword, LoginCredentials, ResetPassword, Token, User, Profile, UserRole, UpdateProfileRequest, ApiError, ChatList, Chat, ChatDetails, CreateChatRequest, CreateMessageRequest, Folder, FolderList, CreateFolderRequest, UpdateFolderRequest, DeleteFolderResponse, Document, DocumentList, CreateDocumentRequest, UpdateDocumentRequest, DeleteDocumentResponse, ProcessDocumentResponse, Organization, UpdateOrganizationRequest, PricingPlanList, Subscription, UpdateSubscriptionRequest, OrganizationLocation, OrganizationLocationList, CreateLocationRequest, UpdateLocationRequest, OrganizationUser, OrganizationUserList, CreateUserRequest, UpdateUserRequest } from "@/lib/types";
 import { toast } from "sonner";
 
 const API_URL = "https://conuage-be-production.up.railway.app"; // API URL
@@ -78,8 +78,19 @@ export const api = {
   
   // Auth API calls
   auth: {
-    signUp: async (userData: UserSignUp): Promise<ApiResponse<void>> => {
+    signUp: async (userData: {
+      email: string;
+      password: string;
+      first_name?: string;
+      last_name?: string;
+    }): Promise<ApiResponse<void>> => {
       try {
+        console.log("Sending signup request with data:", {
+          ...userData,
+          password: "[REDACTED]"
+        });
+        
+        // Send exactly what the backend expects without the role parameter
         const response = await fetch(`${API_URL}/api/v1/auth/signup`, {
           method: "POST",
           headers: {
@@ -94,14 +105,21 @@ export const api = {
       }
     },
 
-    verifyEmail: async (data: VerifyEmail): Promise<ApiResponse<void>> => {
+    verifyEmail: async (data: {
+      email: string;
+      code: string;
+    }): Promise<ApiResponse<void>> => {
       try {
+        console.log("Verifying email with payload:", data);
         const response = await fetch(`${API_URL}/api/v1/auth/verify-email`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            email: data.email,  // Ensure these match exactly the API spec
+            code: data.code     // Keep code as a string parameter
+          }),
         });
         return handleResponse<void>(response);
       } catch (error) {
@@ -132,10 +150,18 @@ export const api = {
 
     regenerateVerificationCode: async (email: string): Promise<ApiResponse<void>> => {
       try {
+        console.log("Regenerating verification code for email:", email);
         const response = await fetch(`${API_URL}/api/v1/auth/regenerate-verification-code?email=${encodeURIComponent(email)}`, {
           method: "POST",
         });
-        return handleResponse<void>(response);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Regenerate code API error:", errorData);
+          return { error: errorData };
+        }
+        
+        return { data: undefined };
       } catch (error) {
         console.error("Regenerate code error:", error);
         return { error: { message: "Network error. Please try again." } };
@@ -144,6 +170,7 @@ export const api = {
 
     forgotPassword: async (data: ForgotPassword): Promise<ApiResponse<void>> => {
       try {
+        console.log("Sending forgot password request for email:", data.email);
         const response = await fetch(`${API_URL}/api/v1/auth/forgot-password`, {
           method: "POST",
           headers: {
@@ -151,6 +178,12 @@ export const api = {
           },
           body: JSON.stringify(data),
         });
+        
+        // Store the email for the reset password page if the request is successful
+        if (response.ok) {
+          sessionStorage.setItem("reset_password_email", data.email);
+        }
+        
         return handleResponse<void>(response);
       } catch (error) {
         console.error("Forgot password error:", error);
@@ -158,14 +191,22 @@ export const api = {
       }
     },
 
-    resetPassword: async (data: ResetPassword): Promise<ApiResponse<void>> => {
+    resetPassword: async (data: { email: string, code: string, password: string }): Promise<ApiResponse<void>> => {
       try {
+        // Transform the data to match what the API expects
+        const apiPayload = {
+          code: data.code,
+          new_password: data.password
+        };
+        
+        console.log("Resetting password with payload:", { ...apiPayload, new_password: "[REDACTED]" });
+        
         const response = await fetch(`${API_URL}/api/v1/auth/reset-password`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify(apiPayload),
         });
         return handleResponse<void>(response);
       } catch (error) {
@@ -376,6 +417,54 @@ export const api = {
 
   // Document Management API calls
   documentManagement: {
+    // Get all folders with nested structure for a location
+    getAllFolders: async (locationId: string): Promise<ApiResponse<Folder[]>> => {
+      try {
+        if (isOffline()) {
+          console.log('Device is offline. Cannot fetch folders.');
+          return {
+            error: { message: 'You are offline. Please check your internet connection and try again.' }
+          };
+        }
+        
+        console.log(`Fetching all nested folders for location: ${locationId}`);
+        
+        const response = await fetchWithTimeout(`${API_URL}/api/v1/document-management/folders/all?location_id=${locationId}`, {
+          method: 'GET',
+          headers: {
+            ...getAuthHeaders(),
+            'cache-control': 'no-cache, no-store, must-revalidate',
+            'pragma': 'no-cache',
+            'expires': '0'
+          }
+        }, 15000);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
+          console.error('Get all folders error:', errorData);
+          return {
+            error: {
+              message: errorData.message || `Server Error: ${response.status} ${response.statusText}`
+            }
+          };
+        }
+
+        const data = await response.json();
+        console.log('All folders API response:', data);
+        return { data, error: null };
+      } catch (error) {
+        console.error('Get all folders error:', error);
+        
+        const errorMessage = (error as Error).message.includes('Failed to fetch')
+          ? 'Network error. The server might be unavailable or there may be a CORS issue.'
+          : (error as Error).message || 'Network error. Please try again.';
+          
+        return {
+          error: { message: errorMessage }
+        };
+      }
+    },
+
     // Get folders (root folders or subfolders of a parent)
     getFolders: async (locationId: string, parentFolderId?: string): Promise<ApiResponse<Folder[] | FolderList>> => {
       try {
