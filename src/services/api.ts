@@ -1,7 +1,7 @@
 import { ApiResponse, ChangePassword, ForgotPassword, LoginCredentials, ResetPassword, Token, User, Profile, UserRole, UpdateProfileRequest, ApiError, ChatList, Chat, ChatDetails, CreateChatRequest, CreateMessageRequest, Folder, FolderList, CreateFolderRequest, UpdateFolderRequest, DeleteFolderResponse, Document, DocumentList, CreateDocumentRequest, UpdateDocumentRequest, DeleteDocumentResponse, ProcessDocumentResponse, Organization, UpdateOrganizationRequest, PricingPlanList, Subscription, UpdateSubscriptionRequest, OrganizationLocation, OrganizationLocationList, CreateLocationRequest, UpdateLocationRequest, OrganizationUser, OrganizationUserList, CreateUserRequest, UpdateUserRequest } from "@/lib/types";
 import { toast } from "sonner";
 
-const API_URL = "https://conuage-be-production.up.railway.app"; // API URL
+const API_URL = "https://conuage-be-187523307981.us-central1.run.app"; // API URL
 
 // Helper function to handle API responses
 const handleResponse = async <T>(response: Response): Promise<ApiResponse<T>> => {
