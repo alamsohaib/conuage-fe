@@ -23,7 +23,7 @@ interface UploadFile {
   error?: string;
   status: 'pending' | 'uploading' | 'error' | 'success';
 }
-
+const API_URL = "https://conuage-be-187523307981.us-central1.run.app"; // API URL
 const UploadDocumentDialog = ({ 
   isOpen, 
   onClose, 
@@ -165,7 +165,7 @@ const UploadDocumentDialog = ({
           ));
         }, 300);
         
-        const response = await fetch(`https://conuage-be-production.up.railway.app/api/v1/document-management/documents/`, {
+        const response = await fetch(`${API_URL}/api/v1/document-management/documents/`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
