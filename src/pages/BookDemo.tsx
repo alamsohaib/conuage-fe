@@ -42,7 +42,7 @@ const BookDemo = () => {
         services_interested[service] = true;
       });
 
-      const response = await fetch('${API_URL}/api/v1/bookings/demo-booking', {
+      const response = await fetch(`${API_URL}/api/v1/bookings/demo-booking`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
