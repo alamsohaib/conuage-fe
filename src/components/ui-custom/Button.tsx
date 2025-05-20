@@ -62,7 +62,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             </svg>
           </div>
         ) : null}
-        <span className={loading ? "invisible" : ""}>{children}</span>
+        <span className={loading ? "invisible" : "flex items-center gap-2"}>{children}</span>
       </button>
     );
   }

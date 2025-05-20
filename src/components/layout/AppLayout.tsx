@@ -56,6 +56,7 @@ export default function AppLayout() {
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const isChatSection = location.pathname.startsWith('/chat');
   const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
+  const isDashboardPage = location.pathname === '/dashboard';
 
   const handleAuthError = () => {
     console.log("Authentication error detected in AppLayout");
@@ -436,9 +437,11 @@ export default function AppLayout() {
         </Sidebar>
         
         <main className="flex-1 relative">
-          <div className="absolute top-4 right-4 z-[100]">
-            <ThemeToggle />
-          </div>
+          {!isDashboardPage && (
+            <div className="absolute top-4 right-4 z-[100]">
+              <ThemeToggle />
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

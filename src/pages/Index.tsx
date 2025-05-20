@@ -69,9 +69,9 @@ const Index = () => {
                 <Button
                   size="lg"
                   onClick={() => navigate("/auth/signup")}
-                  className="min-w-[160px] shadow-button bg-gradient-primary hover:opacity-90 transition-all hover:scale-[1.02]"
+                  className="min-w-[160px] shadow-button bg-gradient-primary hover:opacity-90 transition-all hover:scale-[1.02] inline-flex items-center"
                 >
-                  Get Started
+                  <span>Get Started</span>
                   <ArrowRight size={16} className="ml-2" />
                 </Button>
                 <Button
@@ -102,10 +102,10 @@ const Index = () => {
                 <div className="pt-4">
                   <Button 
                     onClick={() => navigate("/book-demo")} 
-                    className="bg-gradient-primary"
+                    className="bg-gradient-primary inline-flex items-center"
                     size="lg"
                   >
-                    Book a Demo
+                    <span>Book a Demo</span>
                     <ArrowRight size={16} />
                   </Button>
                 </div>
@@ -263,9 +263,9 @@ const Index = () => {
                 <Button
                   size="lg"
                   onClick={() => navigate("/auth/signup")}
-                  className="min-w-[160px] shadow-button bg-gradient-primary"
+                  className="min-w-[160px] shadow-button bg-gradient-primary inline-flex items-center"
                 >
-                  Sign Up Now
+                     <span>Sign Up Now</span>
                   <ArrowRight size={16} className="ml-2" />
                 </Button>
                 <Button
