@@ -1,4 +1,3 @@
-
 import { Outlet, Link, useLocation, useParams, useNavigate, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -279,7 +278,7 @@ export default function AppLayout() {
   return (
     <SidebarProvider defaultOpen={true} defaultPinned={true}>
       <div className="flex min-h-screen w-full bg-background">
-        <Sidebar>
+        <Sidebar className="border-r border-border/30 dark:border-border/20">
           <SidebarHeader className="flex items-center p-4 border-b border-sidebar-border">
             <div className="flex flex-1 items-center justify-center group-data-[collapsible=icon]:justify-center">
               <div className="flex items-center space-x-3 group-data-[collapsible=icon]:space-x-0">

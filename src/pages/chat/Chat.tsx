@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "@/services/api";
@@ -242,7 +243,7 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden animate-fade-in">
-      <header className="border-b border-border/50 p-4 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border/30 dark:border-border/20 p-4 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Button
@@ -281,7 +282,7 @@ const Chat = () => {
         />
       </div>
       
-      <div className="border-t border-border/50 bg-background p-4">
+      <div className="border-t border-border/30 dark:border-border/20 bg-background p-4">
         <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
       </div>
     </div>

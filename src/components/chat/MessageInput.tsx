@@ -57,7 +57,7 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-background px-4 py-3 border-t">
+    <form onSubmit={handleSubmit} className="bg-background px-4 py-3 border-t border-border/30 dark:border-border/10">
       <div className="max-w-3xl mx-auto">
         {imagePreview && (
           <div className="relative w-20 h-20 mb-2">
@@ -69,7 +69,7 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
             <button 
               type="button"
               onClick={removeImage}
-              className="absolute -top-2 -right-2 bg-background border rounded-full p-1 hover:bg-muted"
+              className="absolute -top-2 -right-2 bg-background border border-border/30 dark:border-border/20 rounded-full p-1 hover:bg-muted"
             >
               <X size={14} />
             </button>
@@ -77,13 +77,13 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
         )}
         
         <div className="flex items-end gap-2">
-          <div className="flex-1 bg-muted dark:bg-gray-800 rounded-md border dark:border-gray-600">
+          <div className="flex-1 bg-muted dark:bg-gray-800 rounded-md border border-border/30 dark:border-border/20">
             <Textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
-              className="min-h-[80px] resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white dark:placeholder:text-gray-300"
+              className="min-h-[80px] resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white dark:placeholder:text-gray-400"
               disabled={isLoading}
             />
           </div>
@@ -104,6 +104,7 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
                 size="icon"
                 disabled={isLoading || !!imagePreview}
                 asChild
+                className="border-2 border-border/40 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 hover:border-border/60 dark:hover:border-gray-500"
               >
                 <label htmlFor="image-upload" className="cursor-pointer">
                   <ImageIcon size={18} />
@@ -115,6 +116,7 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
               type="submit" 
               size="icon" 
               disabled={isLoading || (!message.trim() && !imageFile)}
+              className="bg-primary hover:bg-primary/90 dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white border-0"
             >
               {isLoading ? (
                 <Loader2 size={18} className="animate-spin" />
