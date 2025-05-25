@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,11 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 const FAQ = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+
+  const handleFooterNavigation = (link: string) => {
+    navigate(link);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const faqCategories = [
     {
@@ -314,17 +320,13 @@ const FAQ = () => {
               { label: "About", link: "/about" },
               { label: "Pricing", link: "/pricing" }
             ].map(({ label, link }) => (
-              <a 
+              <button 
                 key={label} 
-                href={link}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(link);
-                }}
-                className="text-sm text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+                onClick={() => handleFooterNavigation(link)}
+                className="text-sm text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors cursor-pointer"
               >
                 {label}
-              </a>
+              </button>
             ))}
           </div>
           

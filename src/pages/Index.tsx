@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/ui-custom/Button";
 import { 
@@ -17,6 +18,11 @@ import ChangingWord from "@/components/landing/ChangingWord";
 
 const Index = () => {
   const navigate = useNavigate();
+
+  const handleFooterNavigation = (link: string) => {
+    navigate(link);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -298,17 +304,13 @@ const Index = () => {
               { label: "Pricing", link: "/pricing" },
               { label: "FAQs", link: "/faqs" }
             ].map(({ label, link }) => (
-              <a 
+              <button 
                 key={label} 
-                href={link}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(link);
-                }}
-                className="text-sm text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+                onClick={() => handleFooterNavigation(link)}
+                className="text-sm text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors cursor-pointer"
               >
                 {label}
-              </a>
+              </button>
             ))}
           </div>
           

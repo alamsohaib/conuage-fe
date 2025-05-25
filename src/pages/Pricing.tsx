@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Brain } from "lucide-react";
@@ -7,6 +8,12 @@ import Button from "@/components/ui-custom/Button";
 
 const PricingPage = () => {
   const navigate = useNavigate();
+
+  const handleFooterNavigation = (link: string) => {
+    navigate(link);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const features = [
     { name: "PDF uploads", beta: "Unlimited", enterprise: "Unlimited" },
     { name: "AI-Powered Chat sessions", beta: true, enterprise: true },
@@ -147,7 +154,7 @@ const PricingPage = () => {
         <div className="container flex flex-col md:flex-row justify-between items-center">
           <div 
             className="flex items-center mb-4 md:mb-0 cursor-pointer" 
-            onClick={() => navigate("/")}
+            onClick={() => handleFooterNavigation("/")}
           >
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center shadow-md mr-2">
               <Brain className="w-4 h-4 text-primary-foreground" />
@@ -161,17 +168,13 @@ const PricingPage = () => {
               { label: "Pricing", link: "/pricing" },
               { label: "FAQs", link: "/faqs" }
             ].map(({ label, link }) => (
-              <a 
+              <button 
                 key={label} 
-                href={link}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(link);
-                }}
-                className="text-sm text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors"
+                onClick={() => handleFooterNavigation(link)}
+                className="text-sm text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white transition-colors cursor-pointer"
               >
                 {label}
-              </a>
+              </button>
             ))}
           </div>
           
