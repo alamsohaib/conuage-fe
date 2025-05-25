@@ -5,24 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 interface MessageInputProps {
-  onSendMessage: (content: string, image?: string | null) => Promise<void>;
+  onSendMessage: (content: string, imageFile?: File | null, imagePreview?: string | null) => Promise<void>;
   isLoading: boolean;
 }
 
 const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
   const [message, setMessage] = useState("");
-  const [image, setImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (!message.trim() && !image) return;
+    if (!message.trim() && !imageFile) return;
     
     try {
-      await onSendMessage(message, image);
+      await onSendMessage(message, imageFile, imagePreview);
       setMessage("");
-      setImage(null);
+      setImagePreview(null);
       setImageFile(null);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -46,23 +46,23 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
     
     const reader = new FileReader();
     reader.onloadend = () => {
-      setImage(reader.result as string);
+      setImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
-    setImage(null);
+    setImagePreview(null);
     setImageFile(null);
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-background px-4 py-3 border-t">
       <div className="max-w-3xl mx-auto">
-        {image && (
+        {imagePreview && (
           <div className="relative w-20 h-20 mb-2">
             <img 
-              src={image} 
+              src={imagePreview} 
               alt="Uploaded image" 
               className="w-full h-full object-cover rounded-md" 
             />
@@ -96,13 +96,13 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
                 accept="image/*"
                 onChange={handleImageChange}
                 className="sr-only"
-                disabled={isLoading || !!image}
+                disabled={isLoading || !!imagePreview}
               />
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                disabled={isLoading || !!image}
+                disabled={isLoading || !!imagePreview}
                 asChild
               >
                 <label htmlFor="image-upload" className="cursor-pointer">
@@ -114,7 +114,7 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
             <Button 
               type="submit" 
               size="icon" 
-              disabled={isLoading || (!message.trim() && !image)}
+              disabled={isLoading || (!message.trim() && !imageFile)}
             >
               {isLoading ? (
                 <Loader2 size={18} className="animate-spin" />

@@ -1,3 +1,4 @@
+
 import { Outlet, Link, useLocation, useParams, useNavigate, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -45,6 +46,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+const formatTimeAgo = (date: Date) => {
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}m`;
+  }
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours}h`;
+  }
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) {
+    return `${diffInDays}d`;
+  }
+  
+  const diffInMonths = Math.floor(diffInDays / 30);
+  return `${diffInMonths}M`;
+};
+
 export default function AppLayout() {
   const { userRole, logout, isAuthenticated } = useAuth();
   const location = useLocation();
@@ -55,8 +78,8 @@ export default function AppLayout() {
   const [isLoadingChats, setIsLoadingChats] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const isChatSection = location.pathname.startsWith('/chat');
-  const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
   const isDashboardPage = location.pathname === '/dashboard';
+  const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
 
   const handleAuthError = () => {
     console.log("Authentication error detected in AppLayout");
@@ -227,7 +250,7 @@ export default function AppLayout() {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
-      roles: ['end_user', 'manager', 'org_admin'],
+      roles: ['manager', 'org_admin'],  // Removed 'end_user' from here
     },
     {
       title: "Chat",
@@ -344,7 +367,7 @@ export default function AppLayout() {
                               <MessageSquare size={18} className="mr-3 shrink-0 group-data-[collapsible=icon]:mr-0" />
                               <span className="flex-1 truncate font-medium group-data-[collapsible=icon]:hidden">{chat.name}</span>
                               <span className="text-xs ml-2 text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
-                                {formatDistanceToNow(new Date(chat.created_at), { addSuffix: true })}
+                                {formatTimeAgo(new Date(chat.created_at))}
                               </span>
                             </div>
                           </SidebarMenuButton>

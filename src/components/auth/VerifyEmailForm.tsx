@@ -13,7 +13,7 @@ import { api } from "@/services/api";
 const verifyEmailSchema = z.object({
   code: z.string().min(6, "Verification code must be at least 6 characters"),
 });
-const API_URL = "https://conuage-be-187523307981.us-central1.run.app"; // API URL
+
 type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>;
 
 const VerifyEmailForm = () => {
@@ -74,7 +74,7 @@ const VerifyEmailForm = () => {
       console.log("Submitting verification with email:", email, "code:", data.code);
       
       // Make a direct fetch call to bypass any potential API wrapper issues
-      const response = await fetch(`${API_URL}/api/v1/auth/verify-email`, {
+      const response = await fetch(`https://conuage-be-187523307981.us-central1.run.app/api/v1/auth/verify-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

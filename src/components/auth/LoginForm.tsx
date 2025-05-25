@@ -16,7 +16,7 @@ const loginSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
-const API_URL = "https://conuage-be-187523307981.us-central1.run.app"; // API URL
+
 const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ const LoginForm = () => {
           
           if (success) {
             console.log("Login successful");
-            toast.success("Login successful");
+            // Removed toast.success here to prevent duplicate notifications
             // Navigation is handled in the AuthContext
           } else {
             console.log("Login failed");
@@ -68,7 +68,7 @@ const LoginForm = () => {
       } else {
         // Direct API authentication
         try {
-          const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+          const response = await fetch('https://conuage-be-187523307981.us-central1.run.app/api/v1/auth/login', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
@@ -87,7 +87,7 @@ const LoginForm = () => {
             const success = await login(data.email, data.password);
             if (success) {
               console.log("Login successful");
-              toast.success("Login successful");
+              // Removed toast.success here to prevent duplicate notifications
             }
           } else {
             // Handle API errors
@@ -189,7 +189,7 @@ const LoginForm = () => {
       {showDebugInfo && (
         <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-xs font-mono">
           <p className="font-semibold">Debug Info:</p>
-          <p>API URL: {API_URL}</p>
+          <p>API URL: https://conuage-be-187523307981.us-central1.run.app/</p>
           <p>Possible CORS issue: The API might not allow requests from this origin.</p>
           <p>Solution: You can either use test accounts or have the API configured to allow CORS from this origin.</p>
         </div>

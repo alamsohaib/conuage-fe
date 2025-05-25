@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/ui-custom/Button";
-import { useNavigate, useLocation} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FileText, MessageSquare, Building, User, LogOut, LayoutDashboard } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -29,7 +29,7 @@ const Dashboard = () => {
             <div className="font-medium text-lg text-foreground dark:text-white">Dashboard</div>
           </div>
           <div className="flex items-center gap-3">
-          <ThemeToggle />
+            <ThemeToggle />
             <Button 
               variant="ghost" 
               onClick={logout}

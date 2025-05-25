@@ -7,11 +7,42 @@ import Button from "@/components/ui-custom/Button";
 import Input from "@/components/ui-custom/Input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+
+const blockedEmailDomains = [
+  "@gmail.com",
+  "@yahoo.com",
+  "@hotmail.com",
+  "@outlook.com",
+  "@live.com",
+  "@icloud.com",
+  "@aol.com",
+  "@mail.com",
+  "@msn.com",
+  "@protonmail.com",
+  "@yandex.com",
+  "@zoho.com",
+  "@gmx.com",
+  "@fastmail.com",
+  "@tutanota.com",
+  "@me.com",
+  "@pm.me"
+];
 
 const signUpSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Please enter a valid email"),
+  email: z
+    .string()
+    .email("Please enter a valid email")
+    .refine((email) => {
+      const isBlocked = blockedEmailDomains.some(domain => 
+        email.toLowerCase().endsWith(domain.toLowerCase())
+      );
+      return !isBlocked;
+    }, {
+      message: "Only corporate email addresses are allowed"
+    }),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -36,6 +67,7 @@ const SignUpForm = () => {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -47,7 +79,20 @@ const SignUpForm = () => {
     },
   });
 
+  const watchedEmail = watch("email");
+
   const onSubmit = async (data: SignUpFormValues) => {
+    // Double-check email domain before submission
+    const isBlockedDomain = blockedEmailDomains.some(domain => 
+      data.email.toLowerCase().endsWith(domain.toLowerCase())
+    );
+    
+    if (isBlockedDomain) {
+      toast.error("Only corporate email addresses are allowed");
+      setError("Only corporate email addresses are allowed");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     
@@ -66,10 +111,30 @@ const SignUpForm = () => {
         navigate(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
       }
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
+      console.error("Signup error:", err);
+      
+      // Check if the error contains a detail field (from API response)
+      const errorObj = err as any;
+      
+      // Extract error message from various possible formats
+      let errorMessage: string;
+      
+      if (errorObj?.detail && typeof errorObj.detail === 'string') {
+        errorMessage = errorObj.detail;
+      } else if (errorObj?.message && typeof errorObj.message === 'string') {
+        errorMessage = errorObj.message;
+      } else if (typeof errorObj === 'string') {
+        errorMessage = errorObj;
       } else {
-        setError("An unexpected error occurred during signup. Please try again later.");
+        errorMessage = "An unexpected error occurred during signup. Please try again later.";
+      }
+      
+      // Check if it's an "email already registered" error
+      if (errorMessage.toLowerCase().includes('email already registered')) {
+        toast.error("This email is already registered.");
+        setError("This email is already registered. Please try logging in instead.");
+      } else {
+        setError(errorMessage);
       }
     } finally {
       setIsSubmitting(false);
@@ -100,7 +165,7 @@ const SignUpForm = () => {
         type="email"
         {...register("email")}
         error={errors.email?.message}
-        placeholder="you@example.com"
+        placeholder="you@company.com"
         autoComplete="email"
       />
       

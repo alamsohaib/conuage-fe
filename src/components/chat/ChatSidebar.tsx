@@ -22,6 +22,28 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 
+const formatTimeAgo = (date: Date) => {
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}m`;
+  }
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours}h`;
+  }
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) {
+    return `${diffInDays}d`;
+  }
+  
+  const diffInMonths = Math.floor(diffInDays / 30);
+  return `${diffInMonths}M`;
+};
+
 const ChatSidebar = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,7 +157,7 @@ const ChatSidebar = () => {
                       <MessageCircle size={16} className="shrink-0" />
                       <span className="truncate">{chat.name}</span>
                       <span className="text-xs ml-auto text-muted-foreground">
-                        {formatDistanceToNow(new Date(chat.created_at), { addSuffix: true })}
+                        {formatTimeAgo(new Date(chat.created_at))}
                       </span>
                     </div>
                   </SidebarMenuButton>

@@ -16,7 +16,7 @@ interface DocumentActionsProps {
   onDelete: (document: Document) => void;
   isProcessing: boolean;
 }
-const API_URL = "https://conuage-be-187523307981.us-central1.run.app"; // API URL
+
 const DocumentActions = ({ 
   document: docItem, 
   onEdit, 
@@ -32,7 +32,7 @@ const DocumentActions = ({
     }
     
     const token = localStorage.getItem("authToken");
-    const downloadUrl = `${API_URL}/api/v1/document-management/documents/${docItem.id}/download`;
+    const downloadUrl = `https://conuage-be-187523307981.us-central1.run.app/api/v1/document-management/documents/${docItem.id}/download`;
     
     const a = window.document.createElement("a");
     a.href = downloadUrl;

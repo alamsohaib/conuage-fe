@@ -1,7 +1,7 @@
 
 import { Message, MessageSource } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
-import { User, Bot, Image as ImageIcon } from "lucide-react";
+import { User, Bot, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 interface MessageListProps {
@@ -31,6 +31,16 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
 
   return (
     <div className="flex flex-col space-y-6 pb-6">
+      {/* Chat loading indicator */}
+      {isLoading && !messages.some(msg => msg.isStreaming) && (
+        <div className="flex justify-center items-center py-4 animate-fade-in">
+          <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-muted/50 text-muted-foreground shadow-sm border">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <span className="text-sm font-medium">Loading conversation...</span>
+          </div>
+        </div>
+      )}
+      
       {messages.map((message) => (
         <div
           key={message.id}
@@ -70,7 +80,11 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
                 <div className="whitespace-pre-wrap">
                   {message.content}
                   {message.isStreaming && (
-                    <span className="inline-block w-1.5 h-4 ml-1 bg-current animate-pulse rounded-sm" />
+                    <span className="inline-flex ml-2 items-center gap-1">
+                      <span className="h-2 w-2 bg-current rounded-full animate-pulse" style={{ animationDelay: "0ms" }}></span>
+                      <span className="h-2 w-2 bg-current rounded-full animate-pulse" style={{ animationDelay: "200ms" }}></span>
+                      <span className="h-2 w-2 bg-current rounded-full animate-pulse" style={{ animationDelay: "400ms" }}></span>
+                    </span>
                   )}
                 </div>
                 
@@ -111,22 +125,6 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
         </div>
       ))}
       
-      {isLoading && !messages.some(msg => msg.isStreaming) && (
-        <div className="flex justify-start">
-          <div className="flex flex-row max-w-3xl">
-            <div className="flex items-center justify-center h-8 w-8 rounded-full shrink-0 mr-4 bg-muted text-muted-foreground">
-              <Bot size={16} />
-            </div>
-            <div className="px-4 py-3 rounded-lg bg-muted text-foreground">
-              <div className="flex space-x-2">
-                <div className="h-3 w-3 bg-foreground/20 rounded-full animate-bounce"></div>
-                <div className="h-3 w-3 bg-foreground/20 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="h-3 w-3 bg-foreground/20 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       <div ref={messagesEndRef} />
     </div>
   );

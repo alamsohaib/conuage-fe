@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +26,8 @@ import OrganizationUsers from "./pages/organization/OrganizationUsers";
 import AppLayout from "./components/layout/AppLayout";
 import ProfilePage from "./pages/profile/ProfilePage";
 import Pricing from "./pages/Pricing";
+import About from "./pages/About";
+import FAQ from "./pages/FAQ";
 
 // Lazy load BookDemo for performance
 const BookDemo = lazy(() => import("./pages/BookDemo"));
@@ -115,6 +116,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/faqs" element={<FAQ />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/book-demo" element={
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">

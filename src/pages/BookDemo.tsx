@@ -26,7 +26,7 @@ type FormData = {
   message: string;
   referral?: string;
 };
-const API_URL = "https://conuage-be-187523307981.us-central1.run.app"; // API URL
+
 const BookDemo = () => {
   const navigate = useNavigate();
   const { handleSubmit, register, control, formState: { errors, isSubmitting }, reset } = useForm<FormData>({
@@ -42,7 +42,7 @@ const BookDemo = () => {
         services_interested[service] = true;
       });
 
-      const response = await fetch(`${API_URL}/api/v1/bookings/demo-booking`, {
+      const response = await fetch('https://conuage-be-187523307981.us-central1.run.app/api/v1/bookings/demo-booking', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -106,7 +106,7 @@ const Index = () => {
                     size="lg"
                   >
                     <span>Book a Demo</span>
-                    <ArrowRight size={16} />
+                    <ArrowRight size={16} className="ml-2" />
                   </Button>
                 </div>
               </div>
@@ -265,7 +265,7 @@ const Index = () => {
                   onClick={() => navigate("/auth/signup")}
                   className="min-w-[160px] shadow-button bg-gradient-primary inline-flex items-center"
                 >
-                     <span>Sign Up Now</span>
+                  <span>Sign Up Now</span>
                   <ArrowRight size={16} className="ml-2" />
                 </Button>
                 <Button

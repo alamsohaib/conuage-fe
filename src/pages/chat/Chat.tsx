@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "@/services/api";
@@ -22,6 +21,9 @@ const Chat = () => {
   const isManagerOrAdmin = userRole === 'manager' || userRole === 'org_admin';
 
   useEffect(() => {
+    // Reset messages when changing chats to avoid showing old messages
+    setMessages([]);
+    
     // Handle special "welcome" route or empty chatId
     if (!chatId) {
       navigate("/chat/welcome", { replace: true });
@@ -70,8 +72,8 @@ const Chat = () => {
     fetchChat();
   }, [chatId, navigate, logout]);
 
-  const handleSendMessage = async (content: string, image?: string | null) => {
-    if (!content.trim() && !image) return;
+  const handleSendMessage = async (content: string, imageFile?: File | null, imagePreview?: string | null) => {
+    if (!content.trim() && !imageFile) return;
 
     if (!chatId || chatId === "welcome") {
       try {
@@ -91,13 +93,15 @@ const Chat = () => {
     }
 
     const tempId = Date.now().toString();
+    const aiResponseId = `ai-${Date.now()}`;
+    
     const userMessage: Message = {
       id: tempId,
       chat_id: chatId || "",
       content,
       role: "user",
       created_at: new Date().toISOString(),
-      has_image: !!image
+      has_image: !!imageFile
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -110,11 +114,10 @@ const Chat = () => {
       const formData = new FormData();
       formData.append("content", content);
       
-      if (image) {
-        formData.append("image", image);
+      if (imageFile) {
+        formData.append("image", imageFile);
       }
       
-      const aiResponseId = `ai-${Date.now()}`;
       const initialAiMessage: Message = {
         id: aiResponseId,
         chat_id: chatId || "",
@@ -150,6 +153,7 @@ const Chat = () => {
       }
       
       let accumulatedContent = "";
+      let finalMessageId = "";
       
       const decoder = new TextDecoder();
       let buffer = "";
@@ -170,11 +174,19 @@ const Chat = () => {
           if (line.trim() === "") continue;
           
           if (line.startsWith("data: ")) {
+            const jsonStr = line.substring(6);
+            
+            // Skip the [DONE] message
+            if (jsonStr.trim() === "[DONE]") {
+              continue;
+            }
+            
             try {
-              const jsonStr = line.substring(6);
               const jsonData = JSON.parse(jsonStr);
               
-              if (jsonData.content) {
+              // Only process individual content chunks, not the final complete response
+              if (jsonData.content && !jsonData.sources) {
+                // Add the new content chunk immediately
                 accumulatedContent += jsonData.content;
                 
                 setMessages(prev => 
@@ -185,6 +197,11 @@ const Chat = () => {
                   )
                 );
               }
+              
+              // Store the final message ID when we get the complete response with sources
+              if (jsonData.sources !== undefined) {
+                finalMessageId = jsonData.message_id || aiResponseId;
+              }
             } catch (e) {
               console.error("Error parsing stream data:", e, line);
             }
@@ -192,28 +209,27 @@ const Chat = () => {
         }
       }
       
-      const chatResponse = await api.chat.getChat(chatId || "");
-      if (chatResponse.data) {
-        const updatedMessages = chatResponse.data.messages?.map(message => {
-          const existingMessage = messages.find(
-            m => m.content === message.content && 
-                m.role === message.role && 
-                m.has_image
-          );
-          if (existingMessage?.has_image && message.role === 'user') {
-            return { ...message, has_image: true };
-          }
-          return message;
-        }) || [];
-        
-        setMessages(updatedMessages);
-      }
+      // Update the final message with the real ID and mark streaming as complete
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === aiResponseId 
+            ? { 
+                ...msg, 
+                id: finalMessageId || aiResponseId,
+                content: accumulatedContent,
+                isStreaming: false
+              } 
+            : msg
+        )
+      );
+      
     } catch (error) {
       console.error("Error sending message:", error);
       if (!(error instanceof Error) || !error.message.includes("Token limit reached")) {
         toast.error("Failed to send message");
       }
-      setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+      // Remove both the user message and AI message on error
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempId && msg.id !== aiResponseId));
     } finally {
       setIsLoading(false);
     }
@@ -242,7 +258,9 @@ const Chat = () => {
               <div className="bg-primary/10 p-1.5 rounded-md">
                 <Bot className="h-5 w-5 text-primary" />
               </div>
-              <h1 className="text-lg font-semibold truncate dark:text-white">{chatName || "New Chat"}</h1>
+              <h1 className="text-lg font-semibold truncate dark:text-white">
+                {isFetching ? "Loading..." : chatName || "New Chat"}
+              </h1>
             </div>
           </div>
           <Button
