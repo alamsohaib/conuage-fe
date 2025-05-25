@@ -155,6 +155,7 @@ const Chat = () => {
       
       let accumulatedContent = "";
       let finalMessageId = "";
+      let finalSources: any[] = [];
       
       const decoder = new TextDecoder();
       let buffer = "";
@@ -185,9 +186,8 @@ const Chat = () => {
             try {
               const jsonData = JSON.parse(jsonStr);
               
-              // Only process individual content chunks, not the final complete response
+              // Handle individual content chunks
               if (jsonData.content && !jsonData.sources) {
-                // Add the new content chunk immediately
                 accumulatedContent += jsonData.content;
                 
                 setMessages(prev => 
@@ -199,9 +199,12 @@ const Chat = () => {
                 );
               }
               
-              // Store the final message ID when we get the complete response with sources
+              // Handle the final complete response with sources
               if (jsonData.sources !== undefined) {
                 finalMessageId = jsonData.message_id || aiResponseId;
+                finalSources = jsonData.sources || [];
+                // Update the content to the complete content from the final message
+                accumulatedContent = jsonData.content || accumulatedContent;
               }
             } catch (e) {
               console.error("Error parsing stream data:", e, line);
@@ -210,7 +213,7 @@ const Chat = () => {
         }
       }
       
-      // Update the final message with the real ID and mark streaming as complete
+      // Update the final message with the real ID, sources, and mark streaming as complete
       setMessages(prev => 
         prev.map(msg => 
           msg.id === aiResponseId 
@@ -218,6 +221,7 @@ const Chat = () => {
                 ...msg, 
                 id: finalMessageId || aiResponseId,
                 content: accumulatedContent,
+                sources: finalSources,
                 isStreaming: false
               } 
             : msg
@@ -243,7 +247,7 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden animate-fade-in">
-      <header className="border-b border-border/30 dark:border-border/20 p-4 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border/30 dark:border-border/10 p-4 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Button
@@ -282,7 +286,7 @@ const Chat = () => {
         />
       </div>
       
-      <div className="border-t border-border/30 dark:border-border/20 bg-background p-4">
+      <div className="border-t border-border/30 dark:border-border/10 bg-background p-4">
         <MessageInput onSendMessage={handleSendMessage} isLoading={isLoading} />
       </div>
     </div>
