@@ -77,13 +77,13 @@ const MessageInput = ({ onSendMessage, isLoading }: MessageInputProps) => {
         )}
         
         <div className="flex items-end gap-2">
-          <div className="flex-1 bg-muted rounded-md">
+          <div className="flex-1 bg-muted dark:bg-gray-800 rounded-md border dark:border-gray-600">
             <Textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
-              className="min-h-[80px] resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="min-h-[80px] resize-none bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white dark:placeholder:text-gray-300"
               disabled={isLoading}
             />
           </div>

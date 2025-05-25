@@ -1,4 +1,3 @@
-
 import { Message, MessageSource } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 import { User, Bot, Image as ImageIcon, Loader2 } from "lucide-react";
@@ -20,9 +19,9 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
   if (messages.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <Bot size={64} className="text-muted-foreground mb-4" />
-        <h3 className="text-xl font-semibold mb-2">Start a conversation</h3>
-        <p className="text-muted-foreground max-w-md">
+        <Bot size={64} className="text-muted-foreground dark:text-gray-400 mb-4" />
+        <h3 className="text-xl font-semibold mb-2 text-primary">Start a conversation</h3>
+        <p className="text-muted-foreground dark:text-gray-300 max-w-md">
           Send a message to start chatting with the AI assistant.
         </p>
       </div>
